@@ -43,7 +43,6 @@ export function mountReports(container) {
   });
 
   const newBtn = h('a', { class: 'btn btn--primary page__cta', href: '#/new' }, icon('plus', { size: 18 }), h('span', null, 'Báo cáo mới'));
-  const fab = h('a', { class: 'fab', href: '#/new', 'aria-label': 'Tạo báo cáo mới' }, icon('plus', { size: 22 }));
 
   container.append(h('div', { class: 'page page--reports' },
     h('header', { class: 'page__head' },
@@ -53,7 +52,6 @@ export function mountReports(container) {
     h('div', { class: 'page__toolbar' }, rangeCtl.el),
     localEl,
     listEl,
-    fab,
   ));
 
   /* ---------- Local, unsynced drafts ---------- */
@@ -64,7 +62,7 @@ export function mountReports(container) {
     localEl.hidden = entries.length === 0;
     if (!entries.length) return;
     localEl.append(
-      h('div', { class: 'local-drafts__head' }, icon('device', { size: 15 }),
+      h('div', { class: 'local-drafts__head' },
         h('span', null, 'Đang dở trên máy này'),
         h('span', { class: 'local-drafts__hint' }, 'chưa lưu lên hệ thống')),
       h('ul', { class: 'local-drafts__list' }, entries.map((e) => h('li', null,
@@ -96,9 +94,9 @@ export function mountReports(container) {
 
     const facts = [
       summary.inspections > 0 && h('span', { class: 'fact' }, h('b', { class: 'num' }, summary.inspections), ' lô NL'),
-      summary.fails > 0 && h('span', { class: 'fact fact--fail' }, icon('x', { size: 12 }), h('b', { class: 'num' }, summary.fails), ' không đạt'),
-      summary.nc > 0 && h('span', { class: 'fact fact--nc' }, icon('flag', { size: 12 }), h('b', { class: 'num' }, summary.nc), ' KPH'),
-      summary.images > 0 && h('span', { class: 'fact' }, icon('image', { size: 12 }), h('b', { class: 'num' }, summary.images)),
+      summary.fails > 0 && h('span', { class: 'fact fact--fail' }, h('b', { class: 'num' }, summary.fails), ' không đạt'),
+      summary.nc > 0 && h('span', { class: 'fact' }, h('b', { class: 'num' }, summary.nc), ' KPH'),
+      summary.images > 0 && h('span', { class: 'fact' }, h('b', { class: 'num' }, summary.images), ' ảnh'),
     ].filter(Boolean);
 
     const el = h('article', { class: ['day', expanded && 'is-expanded', `day--${report.status}`], 'data-id': report.id },
@@ -112,12 +110,13 @@ export function mountReports(container) {
         },
           h('span', { class: 'day__line1' },
             h('span', { class: 'day__who' }, report.reporter || 'Chưa có tên'),
-            rel && h('span', { class: 'day__rel' }, rel),
-            h('span', { class: `status status--${report.status}` }, h('span', { class: 'status__dot' }), STATUS_LABEL[report.status]),
-            local && h('span', { class: 'status status--local', title: 'Có thay đổi trên máy chưa đồng bộ' }, icon('device', { size: 11 }), 'Chưa đồng bộ')),
+            rel && h('span', { class: 'day__rel' }, rel)),
           h('span', { class: 'day__line2' },
             strip(summary),
             h('span', { class: 'day__facts' }, facts.length ? facts : h('span', { class: 'fact fact--muted' }, 'Chưa có dữ liệu kiểm tra'))),
+          h('span', { class: 'day__tags' },
+            report.status !== 'done' && h('span', { class: `status status--${report.status}` }, STATUS_LABEL[report.status]),
+            local && h('span', { class: 'status status--local', title: 'Có thay đổi trên máy chưa đồng bộ' }, 'Chưa đồng bộ')),
         ),
         h('div', { class: 'day__actions' },
           h('a', { class: 'icon-btn', href: `#/report/${report.id}`, 'aria-label': 'Mở / sửa', title: 'Mở / sửa' }, icon('edit', { size: 17 })),

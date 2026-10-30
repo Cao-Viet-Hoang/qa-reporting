@@ -62,7 +62,7 @@ export function addButton({ label, onClick }) {
   return h('button', { class: 'add-row', type: 'button', onClick }, icon('plus', { size: 16 }), h('span', null, label));
 }
 
-/** A "+ Ghi chú" disclosure that turns into the note input when tapped (or when a note exists). */
+/** A small pencil button that turns into the note input when tapped (or when a note exists). */
 export function revealNote({ value, placeholder = 'Ghi chú…', onInput, forceOpen, label = 'Ghi chú' }) {
   const wrap = h('div', { class: 'note' });
   const openInput = (focus) => {
@@ -72,6 +72,6 @@ export function revealNote({ value, placeholder = 'Ghi chú…', onInput, forceO
     if (focus) input.focus();
   };
   if (forceOpen || (value && value.trim())) openInput(false);
-  else wrap.append(h('button', { class: 'note__toggle', type: 'button', onClick: () => openInput(true) }, icon('plus', { size: 13 }), label));
+  else wrap.append(h('button', { class: 'icon-btn note__toggle', type: 'button', 'aria-label': `Thêm ${label.toLowerCase()}`, title: `Thêm ${label.toLowerCase()}`, onClick: () => openInput(true) }, icon('edit', { size: 16 })));
   return { el: wrap, open: () => openInput(false) };
 }

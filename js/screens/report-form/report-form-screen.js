@@ -1,5 +1,5 @@
-// The QC workspace: header (date, reporter, status, progress) · section index rail · section
-// accordions · context panel (desktop) · sticky action bar (mobile). State lives in `ctrl.form`;
+// The QC workspace: header (date, reporter, save state, progress, save buttons on desktop) · section
+// index rail (wide desktop) · section accordions · sticky action bar (mobile/tablet). State lives in `ctrl.form`;
 // every change autosaves a local draft (debounced) and nothing reaches Firestore until the user saves.
 import { h, clear, createDisposer, focusLater } from '../../core/dom.js';
 import { router } from '../../core/router.js';
@@ -14,7 +14,7 @@ import { errorMessage } from '../../data/errors.js';
 import {
   SECTIONS, SECTION_BY_KEY, STATUS, STATUS_LABEL, createEmptyForm, reportToForm, collectImageIds,
 } from '../../domain/schema.js';
-import { summarizeSection, summarizeReport, failingItems } from '../../domain/report-summary.js';
+import { summarizeSection, summarizeReport } from '../../domain/report-summary.js';
 import { validateForm } from '../../domain/validation.js';
 import { reportService } from '../../services/report-service.js';
 import { imageService } from '../../services/image-service.js';
@@ -26,7 +26,7 @@ import { toast } from '../../ui/toast.js';
 import { SECTION_RENDERERS, issueKey } from './sections.js';
 
 const SYNC_TEXT = {
-  new: 'Chưa lưu',
+  new: 'Báo cáo mới · chưa lưu',
   clean: 'Đã đồng bộ',
   pending: 'Đang ghi trên máy…',
   local: 'Đã lưu trên máy · chưa đồng bộ',
@@ -185,36 +185,35 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
 
   /* ---------------- DOM skeleton ---------------- */
 
-  const back = h('a', { class: 'ws-back', href: '#/reports', 'aria-label': 'Về danh sách báo cáo' }, icon('arrowLeft', { size: 18 }), h('span', null, 'Báo cáo'));
+  const back = h('a', { class: 'ws-back', href: '#/reports', 'aria-label': 'Về danh sách báo cáo', title: 'Về danh sách báo cáo' }, icon('arrowLeft', { size: 20 }));
   const dateInput = h('input', { class: 'ws-date__input', type: 'date', value: form.date, max: '2100-12-31', 'aria-label': 'Ngày báo cáo', required: true });
   const dateLabel = h('span', { class: 'ws-date__label' });
   const reporterInput = h('input', {
-    class: 'ws-reporter__input', type: 'text', value: form.reporter, placeholder: 'Tên người báo cáo',
+    class: 'ws-reporter__input', type: 'text', value: form.reporter, placeholder: 'Nhập tên',
     autocomplete: 'name', 'aria-label': 'Người báo cáo', maxlength: 80,
   });
-  const statusChip = h('span', { class: 'status' });
   const syncEl = h('span', { class: 'sync', role: 'status', 'aria-live': 'polite' });
   const progressEl = h('div', { class: 'ws-progress' });
 
   const draftBtn = h('button', { class: 'btn btn--ghost btn--lg actionbar__draft', type: 'button' }, h('span', { class: 'btn__label' }, 'Lưu nháp'));
   const doneBtn = h('button', { class: 'btn btn--primary btn--lg actionbar__done', type: 'button' }, icon('check', { size: 18 }), h('span', { class: 'btn__label' }, 'Hoàn tất'));
   const draftBtnSide = h('button', { class: 'btn btn--ghost', type: 'button' }, h('span', { class: 'btn__label' }, 'Lưu nháp'));
-  const doneBtnSide = h('button', { class: 'btn btn--primary', type: 'button' }, icon('check', { size: 16 }), h('span', { class: 'btn__label' }, 'Hoàn tất'));
+  const doneBtnSide = h('button', { class: 'btn btn--primary', type: 'button' }, h('span', { class: 'btn__label' }, 'Hoàn tất'));
 
   const header = h('header', { class: 'ws-head' },
-    h('div', { class: 'ws-head__row' },
-      back,
-      h('div', { class: 'ws-head__status' }, statusChip, syncEl),
+    h('div', { class: 'ws-head__inner' },
+      h('div', { class: 'ws-head__row' },
+        back,
+        h('div', { class: 'field ws-date', 'data-issue': issueKey('header', '', 'date') },
+          h('label', { class: 'ws-date__wrap' }, dateLabel, dateInput, icon('calendar', { size: 16, cls: 'ws-date__icon' })),
+          h('span', { class: 'field__error', role: 'alert' })),
+        h('div', { class: 'field ws-reporter', 'data-issue': issueKey('header', '', 'reporter') },
+          h('label', { class: 'ws-reporter__wrap' }, h('span', { class: 'ws-reporter__label' }, 'Người báo cáo'), reporterInput),
+          h('span', { class: 'field__error', role: 'alert' })),
+        h('div', { class: 'ws-head__actions' }, draftBtnSide, doneBtnSide),
+      ),
+      h('div', { class: 'ws-head__meta' }, syncEl, progressEl),
     ),
-    h('div', { class: 'ws-head__id' },
-      h('div', { class: 'field ws-date', 'data-issue': issueKey('header', '', 'date') },
-        h('label', { class: 'ws-date__wrap' }, dateLabel, dateInput, icon('calendar', { size: 16, cls: 'ws-date__icon' })),
-        h('span', { class: 'field__error', role: 'alert' })),
-      h('div', { class: 'field ws-reporter', 'data-issue': issueKey('header', '', 'reporter') },
-        h('label', { class: 'ws-reporter__wrap' }, icon('user', { size: 15 }), reporterInput),
-        h('span', { class: 'field__error', role: 'alert' })),
-    ),
-    progressEl,
   );
 
   const noticeEl = notice && h('div', { class: `notice notice--${notice.tone} ws-notice`, role: 'status' },
@@ -226,13 +225,13 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
   // Section index rail (desktop) — doubles as progress map.
   const railItems = {};
   const rail = h('nav', { class: 'ws-rail', 'aria-label': 'Các phần của báo cáo' },
-    h('div', { class: 'ws-rail__group' }, h('span', { class: 'ws-rail__part' }, 'Phần 1 · Kiểm soát chất lượng'),
+    h('div', { class: 'ws-rail__group' }, h('span', { class: 'ws-rail__part' }, 'Phần 1'),
       SECTIONS.filter((s) => s.part === 1).map((s) => railItem(s))),
     h('div', { class: 'ws-rail__group' }, h('span', { class: 'ws-rail__part' }, 'Phần 2'), railItem(SECTION_BY_KEY.nonconformities)),
   );
   function railItem(s) {
     const el = h('button', { class: 'rail-item', type: 'button', onClick: () => focusSection(s.key) },
-      h('span', { class: 'rail-item__no num' }, s.no || '!'),
+      h('span', { class: 'rail-item__no num' }, s.no || ''),
       h('span', { class: 'rail-item__name' }, s.short),
       h('span', { class: 'rail-item__state' }));
     railItems[s.key] = el;
@@ -245,7 +244,7 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
     h('h2', { class: 'ws-part__title', id: 'part1-title' }, h('span', { class: 'ws-part__tag' }, 'Phần 1'), 'Kiểm soát chất lượng'),
     SECTIONS.filter((s) => s.part === 1).map((s) => sectionShell(s)));
   const part2 = h('section', { class: 'ws-part ws-part--nc', 'aria-labelledby': 'part2-title' },
-    h('h2', { class: 'ws-part__title', id: 'part2-title' }, h('span', { class: 'ws-part__tag ws-part__tag--nc' }, 'Phần 2'), 'Kiểm soát sự KPH'),
+    h('h2', { class: 'ws-part__title', id: 'part2-title' }, h('span', { class: 'ws-part__tag' }, 'Phần 2'), 'Kiểm soát sự KPH'),
     h('p', { class: 'ws-part__lede' }, SECTION_BY_KEY.nonconformities.hint),
     sectionShell(SECTION_BY_KEY.nonconformities, { flat: true }));
 
@@ -270,10 +269,6 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
     return el;
   }
 
-  // Context panel (wide desktop)
-  const ctxPanel = h('aside', { class: 'ws-context', 'aria-label': 'Tóm tắt báo cáo' });
-  const actionsSide = h('div', { class: 'ws-context__actions' }, draftBtnSide, doneBtnSide);
-
   const actionbar = h('div', { class: 'actionbar' },
     h('div', { class: 'actionbar__inner' }, draftBtn, doneBtn));
 
@@ -282,8 +277,7 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
     noticeEl,
     h('div', { class: 'ws-grid' },
       rail,
-      h('div', { class: 'ws-main' }, part1, part2),
-      h('div', { class: 'ws-side' }, ctxPanel, actionsSide)),
+      h('div', { class: 'ws-main' }, part1, part2)),
     actionbar,
   );
   clear(container).append(workspace);
@@ -349,10 +343,9 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
 
   function sectionChips(key, sum) {
     const chips = [];
-    if (sum.fails > 0) chips.push(h('span', { class: 'chip chip--fail' }, icon('x', { size: 11 }), `${sum.fails} không đạt`));
+    if (sum.fails > 0) chips.push(h('span', { class: 'chip chip--fail' }, `${sum.fails} không đạt`));
     if (sum.label) chips.push(h('span', { class: 'chip' }, sum.label));
-    if (sum.images > 0) chips.push(h('span', { class: 'chip' }, icon('image', { size: 11 }), `${sum.images} ảnh`));
-    if (!chips.length) chips.push(h('span', { class: 'chip chip--muted' }, 'Chưa có dữ liệu'));
+    if (sum.images > 0) chips.push(h('span', { class: 'chip' }, `${sum.images} ảnh`));
     return chips;
   }
 
@@ -362,7 +355,9 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
     SECTIONS.forEach((s) => {
       const sum = report.sections[s.key];
       const entry = sectionEls[s.key];
-      entry.summaryEl.replaceChildren(...sectionChips(s.key, sum));
+      const chips = sectionChips(s.key, sum);
+      entry.summaryEl.replaceChildren(...chips);
+      entry.summaryEl.hidden = chips.length === 0;
       entry.el.classList.toggle('has-fail', sum.fails > 0);
       entry.el.classList.toggle('is-filled', sum.filled > 0);
       const state = sum.fails > 0 ? 'fail' : (sum.filled > 0 ? 'ok' : 'empty');
@@ -388,46 +383,20 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
           });
         })),
       h('span', { class: 'ws-progress__text' },
-        h('b', { class: 'num' }, `${report.touchedSections}/${report.part1Total}`), ' ý đã nhập',
+        h('b', { class: 'num' }, `${report.touchedSections}/${report.part1Total}`), ' mục đã nhập',
         report.fails > 0 && h('span', { class: 'ws-progress__fail' }, ' · ', h('b', { class: 'num' }, report.fails), ' không đạt'),
         report.nc > 0 && h('span', null, ' · ', h('b', { class: 'num' }, report.nc), ' KPH')),
     );
-
-    paintContext(report);
   }
 
   function scheduleSummary() {
     if (!summaryFrame) summaryFrame = requestAnimationFrame(paintSummaries);
   }
 
-  function paintContext(report) {
-    const fails = failingItems(form, 8);
-    const pendingImages = collectImageIds(form).filter((id) => imageService.isPending(id)).length;
-    clear(ctxPanel).append(
-      h('div', { class: 'ctx-block' },
-        h('span', { class: 'ctx-label' }, 'Lưu trữ'),
-        h('dl', { class: 'ctx-sync' },
-          h('div', null, h('dt', null, icon('device', { size: 13 }), 'Trên máy'), h('dd', null, lastLocalAt && syncState !== 'clean' ? formatTime(lastLocalAt) : '—')),
-          h('div', null, h('dt', null, icon('cloud', { size: 13 }), 'Hệ thống'), h('dd', null, lastSyncedAt ? formatDateTime(lastSyncedAt) : 'Chưa lưu'))),
-        pendingImages > 0 && h('p', { class: 'ctx-note' }, icon('image', { size: 13 }), `${pendingImages} ảnh sẽ tải lên khi lưu`)),
-      h('div', { class: 'ctx-block' },
-        h('span', { class: 'ctx-label' }, 'Không đạt'),
-        fails.items.length
-          ? h('ul', { class: 'ctx-fails' }, fails.items.map((t) => h('li', null, t)), fails.more > 0 && h('li', { class: 'more' }, `+${fails.more} mục khác`))
-          : h('p', { class: 'ctx-empty' }, report.passes > 0 ? 'Chưa có mục không đạt.' : 'Chưa có kết quả đánh giá.')),
-      h('div', { class: 'ctx-block ctx-block--nc' },
-        h('span', { class: 'ctx-label' }, 'Sự KPH'),
-        h('p', { class: 'ctx-big' }, h('b', { class: 'num' }, report.nc), h('span', null, report.nc ? ' sự KPH ghi nhận' : ' — chưa ghi nhận')),
-        h('button', { class: 'link-btn', type: 'button', onClick: () => sectionEls.nonconformities.el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, 'Đi tới Phần 2', icon('chevronRight', { size: 14 }))),
-    );
-  }
-
   /* ---------------- Header state ---------------- */
 
   function paintHeader() {
     const status = ctx.isNew && !ctx.remoteStatus ? 'new' : (ctx.remoteStatus || form.status);
-    statusChip.className = `status status--${status}`;
-    statusChip.replaceChildren(h('span', { class: 'status__dot' }), STATUS_LABEL[status]);
     dateLabel.textContent = formatDateLong(form.date);
     const isDone = ctx.remoteStatus === STATUS.DONE;
     [doneBtn, doneBtnSide].forEach((b) => { b.querySelector('.btn__label').textContent = isDone ? 'Lưu hoàn tất' : 'Hoàn tất'; });
@@ -436,17 +405,22 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
       b.title = isDone ? 'Lưu và chuyển trạng thái về Nháp' : 'Lưu lên hệ thống ở trạng thái Nháp';
     });
     workspace.dataset.status = status;
+    setSync(syncState);
   }
 
+  /** One status line: report status (once saved) · where the latest edits live. */
   function setSync(state) {
     syncState = state;
     syncEl.className = `sync sync--${state}`;
-    const iconName = { new: 'device', clean: 'cloud', pending: 'device', local: 'device', syncing: 'cloud', error: 'alert' }[state];
-    syncEl.replaceChildren(
-      state === 'syncing' ? h('span', { class: 'spinner spinner--xs' }) : icon(iconName, { size: 13 }),
-      h('span', { class: 'sync__text' }, state === 'local' && lastLocalAt ? `Lưu trên máy ${formatTime(lastLocalAt)} · chưa đồng bộ` : SYNC_TEXT[state]),
-    );
-    scheduleSummary();
+    const status = ctx.remoteStatus && STATUS_LABEL[ctx.remoteStatus];
+    let text = SYNC_TEXT[state];
+    if (state === 'local' && lastLocalAt) text = `Lưu trên máy ${formatTime(lastLocalAt)} · chưa đồng bộ`;
+    if (state === 'clean' && lastSyncedAt) text = `Đã lưu lên hệ thống ${formatDateTime(lastSyncedAt)}`;
+    syncEl.replaceChildren(...[
+      state === 'syncing' && h('span', { class: 'spinner spinner--xs' }),
+      status && state !== 'new' && h('span', { class: `sync__status sync__status--${ctx.remoteStatus}` }, status),
+      h('span', { class: 'sync__text' }, text),
+    ].filter(Boolean));
   }
 
   /* ---------------- Validation display ---------------- */

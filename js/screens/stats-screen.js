@@ -50,8 +50,8 @@ export function mountStats(container) {
       h('header', { class: 'panel__head' },
         h('div', null,
           h('h2', { class: 'panel__title', id: 'st-sup' }, 'Tỉ lệ chấp nhận nhà cung cấp'),
-          h('p', { class: 'panel__sub' }, 'Mỗi dòng ở ý 1 là 1 lần kiểm · Tỉ lệ = số lần Đạt / số lần kiểm · thấp nhất ở trên')),
-        attention > 0 && h('span', { class: 'flag-pill' }, icon('alert', { size: 13 }), `${attention} NCC dưới ${formatPercent(ATTENTION_RATE)}`)),
+          h('p', { class: 'panel__sub' }, 'Số lần Đạt / số lần kiểm ở mục 1, thấp nhất ở trên')),
+        attention > 0 && h('span', { class: 'flag-pill' }, `${attention} NCC dưới ${formatPercent(ATTENTION_RATE)}`)),
       rows.length === 0
         ? emptyState({ icon: 'stats', title: 'Chưa có lần kiểm nào', text: 'Không có dòng nguyên liệu đầu vào nào có kết quả trong khoảng ngày này.' })
         : h('div', { class: 'acc' },
@@ -73,7 +73,7 @@ export function mountStats(container) {
                   h('td', { class: 'acc__rate' },
                     h('span', { class: 'meter', role: 'img', 'aria-label': `${formatPercent(r.rate)} — ${r.passes}/${r.inspections} lần đạt`, title: `${r.passes} đạt · ${r.fails} không đạt` },
                       h('span', { class: 'meter__fill', style: { width: `${Math.max(r.rate * 100, 0)}%` } })),
-                    h('span', { class: 'acc__pct num' }, low && icon('alert', { size: 12, cls: 'acc__warn' }), formatPercent(r.rate))));
+                    h('span', { class: 'acc__pct num' }, formatPercent(r.rate))));
               })))),
     );
   }
@@ -94,7 +94,7 @@ export function mountStats(container) {
       tile('Lần kiểm nguyên liệu', formatNumber(summary.inspections), h('span', { class: 'num' }, `${formatNumber(summary.reports)} báo cáo`)),
       tile('Sự KPH', formatNumber(summary.ncCount), h('span', { class: 'num' }, `Tổng SL ${formatNumber(summary.ncQuantity)}`)),
       tile(`NCC dưới ${formatPercent(ATTENTION_RATE)}`, formatNumber(low),
-        low ? [icon('alert', { size: 12 }), ` trên ${formatNumber(suppliers.length)} NCC`] : `Tất cả ${formatNumber(suppliers.length)} NCC đạt`,
+        low ? `trên ${formatNumber(suppliers.length)} NCC` : `Tất cả ${formatNumber(suppliers.length)} NCC đạt`,
         low > 0 && 'is-low'),
     );
   }
@@ -110,7 +110,7 @@ export function mountStats(container) {
       h('header', { class: 'panel__head' },
         h('div', null,
           h('h2', { class: 'panel__title', id: 'st-trend' }, 'Diễn biến chất lượng'),
-          h('p', { class: 'panel__sub' }, `Tỉ lệ chấp nhận NL và số sự KPH ${unitText} · rê chuột hoặc dùng phím ←/→ để xem chi tiết`)),
+          h('p', { class: 'panel__sub' }, `Tỉ lệ chấp nhận NL và số sự KPH ${unitText}`)),
         h('ul', { class: 'legend' },
           h('li', null, h('span', { class: 'legend__key legend__key--line' }), 'Tỉ lệ chấp nhận'),
           h('li', null, h('span', { class: 'legend__key legend__key--nc' }), 'Số sự KPH'))),
@@ -142,7 +142,7 @@ export function mountStats(container) {
       h('header', { class: 'panel__head' },
         h('div', null,
           h('h2', { class: 'panel__title', id: 'st-cause' }, 'Nguyên nhân KPH'),
-          h('p', { class: 'panel__sub' }, `Biểu đồ Pareto · cột đậm là nhóm nguyên nhân chiếm ${formatPercent(PARETO_CUT)} tổng — ưu tiên kiểm soát nhóm này`)),
+          h('p', { class: 'panel__sub' }, `Cột đỏ là nhóm nguyên nhân chiếm ${formatPercent(PARETO_CUT)} tổng — nên ưu tiên kiểm soát`)),
         causes.length > 0 && seg),
       bodyEl,
       unclassified > 0 && h('p', { class: 'panel__foot' }, icon('info', { size: 13 }), `${unclassified} sự KPH chưa chọn nguyên nhân không được tính.`),

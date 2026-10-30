@@ -19,7 +19,7 @@ export function renderLogin({ onUnlocked }) {
   });
   const reveal = h('button', { class: 'login__reveal', type: 'button', 'aria-label': 'Hiện mật khẩu', 'aria-pressed': 'false' }, icon('eye', { size: 18 }));
   const submit = h('button', { class: 'btn btn--primary btn--lg login__submit', type: 'submit', disabled: !configured },
-    h('span', { class: 'btn__label' }, 'Truy cập'), icon('chevronRight', { size: 18 }));
+    h('span', { class: 'btn__label' }, 'Truy cập'));
   const error = h('p', { class: 'login__error', id: 'access-error', role: 'alert' });
 
   const form = h('form', { class: 'login__form', novalidate: true },
@@ -31,7 +31,6 @@ export function renderLogin({ onUnlocked }) {
 
   const root = h('div', { class: 'login' },
     h('div', { class: 'login__panel' },
-      h('div', { class: 'login__mark' }, icon('check', { size: 22 })),
       h('h1', { class: 'login__title' }, 'Báo cáo QC'),
       h('p', { class: 'login__lede' }, 'Kiểm soát chất lượng theo ngày'),
       form,
@@ -41,7 +40,8 @@ export function renderLogin({ onUnlocked }) {
           h('strong', null, 'Chưa cấu hình Firebase. '),
           'Điền thông tin project vào ', h('code', null, 'js/config/firebase-config.js'), ' (xem README).')),
       showDemo && h('button', { class: 'login__demo', type: 'button', onClick: () => { accessService.enterDemo(); onUnlocked(); } },
-        'Xem bản demo với dữ liệu mẫu', h('span', null, ' — chỉ lưu trên trình duyệt này')),
+        'Xem bản demo với dữ liệu mẫu'),
+      showDemo && h('p', { class: 'login__demo-hint' }, 'Dữ liệu demo chỉ lưu trên trình duyệt này.'),
     ),
   );
 

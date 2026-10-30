@@ -109,6 +109,7 @@ function renderChecklist(ctrl, key) {
   return h('div', { class: 'checks' }, rows.map((row, i) => {
     let rowEl;
     const detail = h('div', { class: 'check__detail' });
+    const noteSlot = h('div', { class: 'check__note' });
 
     const paintDetail = () => {
       detail.replaceChildren();
@@ -118,7 +119,7 @@ function renderChecklist(ctrl, key) {
         onInput: (v) => { row.note = v; ctrl.change(); },
         forceOpen: row.result === RESULT.FAIL,
       });
-      detail.append(note.el);
+      noteSlot.replaceChildren(note.el);
       if (row.result === RESULT.FAIL) {
         const images = createImageField({
           ids: row.imageIds,
@@ -150,7 +151,8 @@ function renderChecklist(ctrl, key) {
     rowEl = rowShell('check', row,
       h('div', { class: 'check__main' },
         h('span', { class: 'check__name' }, row.item),
-        toggle.el),
+        toggle.el,
+        noteSlot),
       detail,
     );
     rowEl.dataset.key = `${key}-${i}`;
@@ -319,7 +321,7 @@ function renderNonconformities(ctrl) {
     rows.map((row, i) => {
       const cause = catalogCombo(ctrl, 'ncCauses', row, 'causeId', 'causeName', 'Nguyên nhân', i);
       return h('div', { class: 'nc', 'data-key': row._k },
-        h('div', { class: 'nc__rail' }, h('span', { class: 'nc__no num' }, String(i + 1).padStart(2, '0'))),
+        h('div', { class: 'nc__rail' }, h('span', { class: 'nc__no num' }, `#${i + 1}`)),
         h('div', { class: 'nc__body' },
           field({ label: 'Sự KPH', control: textArea({ value: row.description, placeholder: 'Mô tả sự không phù hợp…', rows: 1, onInput: (v) => { row.description = v; ctrl.change(); } }), issue: issueKey(key, row._k, 'description'), cls: 'field--desc' }),
           h('div', { class: 'nc__grid' },

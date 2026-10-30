@@ -1,28 +1,22 @@
 /* Design tokens — single source of truth for the visual system. */
 :root {
-  /* Typography */
-  --font-sans: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Typography — system UI fonts: native on every device, full Vietnamese coverage, no download. */
+  --font-sans: system-ui, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
 
-  --text-2xs: 0.6875rem;  /* 11 — micro labels */
-  --text-xs: 0.75rem;     /* 12 — helper, meta */
-  --text-sm: 0.8125rem;   /* 13 — secondary */
-  --text-base: 0.9375rem; /* 15 — body, inputs */
-  --text-md: 1.0625rem;   /* 17 — section titles */
-  --text-lg: 1.25rem;     /* 20 — subsection hero */
-  --text-xl: 1.625rem;    /* 26 — page title */
-  --text-2xl: 2.25rem;    /* 36 — hero numbers */
+  /* Five sizes only. Pick by role, never by "a bit smaller". */
+  --text-xs: 0.75rem;   /* 12 — captions: chips, timestamps, units */
+  --text-sm: 0.875rem;  /* 14 — secondary text, labels, buttons */
+  --text-base: 1rem;    /* 16 — body, inputs, list items */
+  --text-lg: 1.25rem;   /* 20 — section / panel titles */
+  --text-xl: 1.75rem;   /* 28 — page titles, key numbers */
 
+  /* Two weights only. */
   --weight-regular: 400;
-  --weight-medium: 500;
   --weight-semibold: 600;
-  --weight-bold: 700;
 
-  --leading-tight: 1.2;
-  --leading-snug: 1.35;
+  --leading-tight: 1.25;
+  --leading-snug: 1.4;
   --leading-normal: 1.5;
-  --tracking-tight: -0.015em;
-  --tracking-caps: 0.06em;
 
   /* Spacing (4px grid) */
   --space-1: 4px;
@@ -36,47 +30,50 @@
   --space-12: 48px;
   --space-16: 64px;
 
+  /* Control heights */
+  --h-sm: 32px;
+  --h-md: 40px;
+  --h-lg: 48px;
+
   /* Radius */
-  --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --radius-lg: 16px;
   --radius-pill: 999px;
 
   /* Neutrals */
-  --c-bg: #f6f6f3;
+  --c-bg: #f5f5f3;
   --c-surface: #ffffff;
-  --c-surface-2: #f1f1ed;
-  --c-surface-3: #e9e9e4;
-  --c-ink: #16171a;
-  --c-ink-2: #464950;
-  --c-ink-3: #74777f;
-  --c-ink-4: #a3a5ab;
-  --c-line: #e5e5e0;
-  --c-line-strong: #d2d2cb;
+  --c-surface-2: #efefec;
+  --c-surface-3: #e4e4e0;
+  --c-ink: #17181b;
+  --c-ink-2: #3f4248;
+  --c-ink-3: #5f626a;   /* lowest contrast allowed for text (≥ 5:1) */
+  --c-ink-4: #a3a5ab;   /* borders, icons, disabled — never body text */
+  --c-line: #e3e3de;
+  --c-line-strong: #cfcfc8;
 
   /* Accent */
-  --c-accent: #3b4fd4;
-  --c-accent-hover: #3042bb;
-  --c-accent-active: #283799;
-  --c-accent-soft: #eceefc;
-  --c-accent-line: #c9cff5;
-  --c-accent-ink: #2b3aa6;
+  --c-accent: #2456b8;
+  --c-accent-hover: #1e4a9f;
+  --c-accent-active: #193e86;
+  --c-accent-soft: #eaf0fa;
+  --c-accent-line: #c2d2ee;
+  --c-accent-ink: #1e4a9f;
   --c-on-accent: #ffffff;
 
   /* Status */
   --c-pass: #1d7a47;
   --c-pass-soft: #e8f4ec;
   --c-pass-line: #bfe0cb;
-  --c-fail: #c2433a;
+  --c-fail: #be3a31;
   --c-fail-soft: #fcefec;
   --c-fail-line: #f0c8c1;
-  --c-warn: #9a6210;
+  --c-warn: #8a560b;
   --c-warn-soft: #fbf3e2;
   --c-warn-line: #ecd7a6;
 
-  --c-focus: rgba(59, 79, 212, 0.38);
+  --c-focus: rgba(36, 86, 184, 0.35);
   --c-scrim: rgba(14, 15, 18, 0.48);
   --c-overlay-bg: #0d0e10;
 
@@ -106,13 +103,13 @@
   --z-overlay: 80;
 
   /* Layout */
-  --tap: 44px;
-  --tap-lg: 48px;
+  --tap: var(--h-lg);
   --header-h: 56px;
-  --bottomnav-h: 64px;
-  --actionbar-h: 76px;
+  --bottomnav-h: 60px;
+  --actionbar-h: 72px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --content-max: 1360px;
+  --page-narrow: 760px;
+  --page-wide: 1200px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -122,19 +119,19 @@
     --c-surface-2: #222328;
     --c-surface-3: #2b2c32;
     --c-ink: #ececee;
-    --c-ink-2: #b9bbc2;
-    --c-ink-3: #8b8e97;
-    --c-ink-4: #62656d;
+    --c-ink-2: #c3c5cb;
+    --c-ink-3: #9a9da5;
+    --c-ink-4: #5d6068;
     --c-line: #2b2d33;
     --c-line-strong: #3a3c44;
 
-    --c-accent: #7d8cf0;
-    --c-accent-hover: #93a0f3;
-    --c-accent-active: #a7b2f6;
-    --c-accent-soft: #23274a;
-    --c-accent-line: #3a4180;
-    --c-accent-ink: #b2bbf7;
-    --c-on-accent: #0f1230;
+    --c-accent: #7aa3ee;
+    --c-accent-hover: #91b3f1;
+    --c-accent-active: #a8c3f4;
+    --c-accent-soft: #1d2a44;
+    --c-accent-line: #34507f;
+    --c-accent-ink: #a6c1f3;
+    --c-on-accent: #0c1830;
 
     --c-pass: #5cc48a;
     --c-pass-soft: #16291f;
@@ -146,7 +143,7 @@
     --c-warn-soft: #2e2414;
     --c-warn-line: #5a4520;
 
-    --c-focus: rgba(125, 140, 240, 0.45);
+    --c-focus: rgba(122, 163, 238, 0.45);
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -10px rgba(0, 0, 0, 0.6);
     --shadow-3: 0 24px 60px -16px rgba(0, 0, 0, 0.7);
