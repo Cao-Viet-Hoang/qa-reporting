@@ -1,5 +1,6 @@
 // Statistics formulas — PLAN.md §4. Pure functions over report documents.
 import { RESULT } from './schema.js';
+import { addDays, parseISODate, toISODate } from '../core/utils.js';
 
 const keyOf = (id, name) => id || `name:${name}`;
 
@@ -49,18 +50,77 @@ export function ncCauseStats(reports) {
     .sort((a, b) => b.count - a.count || b.quantity - a.quantity || a.name.localeCompare(b.name, 'vi'));
 }
 
-/** NC actions: number of uses. Most used first. */
-export function ncActionStats(reports) {
-  return tally(reports, 'actionId', 'actionName', false)
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'vi'));
+/**
+ * Pareto view of NC causes by `metric` ('count' | 'quantity'), largest first.
+ * `share` / `cumulative` are fractions of the total; `vital` marks the causes that together
+ * make up the first 80% (the cause that crosses 80% is included).
+ */
+export function paretoCauses(causes, metric = 'count', cut = 0.8) {
+  const rows = [...causes].sort((a, b) => b[metric] - a[metric] || b.count - a.count || a.name.localeCompare(b.name, 'vi'));
+  const total = rows.reduce((n, r) => n + r[metric], 0);
+  let before = 0;
+  return rows.map((r) => {
+    const share = total ? r[metric] / total : 0;
+    const out = { ...r, value: r[metric], share, cumulative: before + share, vital: total > 0 && r[metric] > 0 && before < cut };
+    before += share;
+    return out;
+  });
+}
+
+const BUCKETS = {
+  day: { start: (iso) => iso, next: (iso) => addDays(iso, 1) },
+  week: { start: (iso) => addDays(iso, -((parseISODate(iso).getDay() + 6) % 7)), next: (iso) => addDays(iso, 7) },
+  month: {
+    start: (iso) => `${iso.slice(0, 7)}-01`,
+    next: (iso) => { const d = parseISODate(iso); return toISODate(new Date(d.getFullYear(), d.getMonth() + 1, 1)); },
+  },
+};
+
+/**
+ * Acceptance rate and NC count over time, oldest first. Buckets by day; by week past ~2 months,
+ * by month past ~1 year. Empty buckets are kept so the time axis stays even.
+ * Open range bounds fall back to the first / last report date.
+ */
+export function trendSeries(reports, { from, to } = {}) {
+  const dates = reports.map((r) => r.date).filter(Boolean).sort();
+  if (!dates.length) return { unit: 'day', buckets: [] };
+  const start = from || dates[0];
+  const end = to || dates[dates.length - 1];
+  const days = Math.round((parseISODate(end) - parseISODate(start)) / 86400000) + 1;
+  const unit = days > 400 ? 'month' : days > 62 ? 'week' : 'day';
+  const b = BUCKETS[unit];
+
+  const map = new Map();
+  for (let key = b.start(start); key <= end; key = b.next(key)) {
+    map.set(key, { key, end: addDays(b.next(key), -1), inspections: 0, passes: 0, ncCount: 0, ncQuantity: 0 });
+  }
+  for (const report of reports) {
+    const entry = map.get(b.start(report.date));
+    if (!entry) continue;
+    for (const row of report.incoming || []) {
+      if (!row.supplierId && !row.supplierName) continue;
+      if (row.result !== RESULT.PASS && row.result !== RESULT.FAIL) continue;
+      entry.inspections += 1;
+      if (row.result === RESULT.PASS) entry.passes += 1;
+    }
+    for (const row of report.nonconformities || []) {
+      entry.ncCount += 1;
+      if (typeof row.quantity === 'number') entry.ncQuantity += row.quantity;
+    }
+  }
+  const buckets = [...map.values()].map((e) => ({ ...e, rate: e.inspections ? e.passes / e.inspections : null }));
+  return { unit, buckets };
 }
 
 export function rangeSummary(reports) {
   const ncRows = reports.flatMap((r) => r.nonconformities || []);
+  const inspected = reports.flatMap((r) => r.incoming || []).filter((x) => x.result && (x.supplierId || x.supplierName));
   return {
     reports: reports.length,
-    inspections: reports.reduce((n, r) => n + (r.incoming || []).filter((x) => x.result && (x.supplierId || x.supplierName)).length, 0),
+    inspections: inspected.length,
+    passes: inspected.filter((x) => x.result === RESULT.PASS).length,
     ncCount: ncRows.length,
+    ncQuantity: ncRows.reduce((n, r) => n + (typeof r.quantity === 'number' ? r.quantity : 0), 0),
     ncUnclassified: ncRows.filter((r) => !r.causeId && !r.causeName).length,
   };
 }

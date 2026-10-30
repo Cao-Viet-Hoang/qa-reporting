@@ -107,6 +107,6 @@ export const accessService = {
     storage.remove(STORAGE_KEYS.catalogCache);
     await disposeFirestore();
     setBackend(null);
-    appState.set({ mode: null, catalogStatus: 'idle', catalogs: { suppliers: [], ncCauses: [], ncActions: [] } });
+    appState.set({ mode: null, catalogStatus: 'idle', catalogs: { suppliers: [], ncCauses: [] } });
   },
 };

@@ -1,4 +1,4 @@
-// Catalog state: suppliers, NC causes, NC actions. Cached locally so forms still work offline.
+// Catalog state: suppliers, NC causes. Cached locally so forms still work offline.
 import { STORAGE_KEYS } from '../config/app-config.js';
 import { appState } from '../core/store.js';
 import { byName, cleanName, normalizeText } from '../core/utils.js';

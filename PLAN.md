@@ -24,8 +24,8 @@ Web nhập báo cáo kiểm soát chất lượng theo mẫu `20261018- QAVLF-BM
 | 1 | Nhập mật khẩu | 1 ô mật khẩu |
 | 2 | Danh sách báo cáo | Sắp xếp theo ngày mới nhất, lọc theo khoảng ngày, tạo mới. Bấm vào để xem, sửa, xoá |
 | 3 | Form báo cáo | Nhập Phần 1 (ý 1–7) và Phần 2 |
-| 4 | Thống kê | Tỉ lệ chấp nhận NCC, nguyên nhân KPH, hình thức xử lý, theo khoảng ngày |
-| 5 | Danh mục | Nhà cung cấp, Nguyên nhân KPH, Hình thức xử lý |
+| 4 | Thống kê | Tỉ lệ chấp nhận NCC, nguyên nhân KPH, theo khoảng ngày |
+| 5 | Danh mục | Nhà cung cấp, Nguyên nhân KPH |
 
 ## 3. Form báo cáo
 
@@ -87,7 +87,6 @@ Mỗi ý là một khối có thể thu gọn hoặc mở ra.
 - Mỗi dòng gồm:
   - **Sự KPH:** tự nhập.
   - **Nguyên nhân:** chọn từ danh mục, có search nhanh.
-  - **Hình thức xử lý:** chọn từ danh mục, có search nhanh.
   - **Số lượng.**
 - Nếu giá trị đang gõ chưa có trong danh mục thì hiện tuỳ chọn **"+ Thêm '…' vào danh mục"** để thêm ngay trong form.
 - Có nút thêm và xoá dòng.
@@ -107,8 +106,7 @@ Mỗi ý là một khối có thể thu gọn hoặc mở ra.
   - Bảng gồm NCC, Số lần kiểm, Số lần Đạt, %. Sắp xếp % từ thấp đến cao.
 - **Nguyên nhân KPH:**
   - Số lần xuất hiện và tổng số lượng của từng nguyên nhân.
-  - Biểu đồ cột ngang, nguyên nhân nhiều nhất nằm trên cùng.
-- **Hình thức xử lý:** số lần sử dụng của từng hình thức.
+  - Biểu đồ Pareto (theo số lần hoặc số lượng), tô đậm nhóm nguyên nhân chiếm 80% tổng.
 
 ## 5. Danh mục (sửa trên web)
 
@@ -118,7 +116,7 @@ Mỗi ý là một khối có thể thu gọn hoặc mở ra.
   - MUỐI THÀNH PHÁT, AJINOMOTO VIỆT NAM, BRENNTAG VIỆT NAM, PALDO VINA
   - VINA AROMA, TRÍ VIỆT PHÁT, HỢP TÁC XÃ THƯƠNG MẠI - SẢN XUẤT NÔNG NGHIỆP VINA
   - SAIGON VE WONG, THỰC PHẨM N F C (Nature), PHÚ CƯỜNG, MIHACO
-- **Nguyên nhân KPH** và **Hình thức xử lý:** ban đầu trống. Thêm từ màn hình Danh mục hoặc ngay trong form.
+- **Nguyên nhân KPH:** ban đầu trống. Thêm từ màn hình Danh mục hoặc ngay trong form.
 - Mỗi mục có thể thêm, sửa tên, ẩn.
 - Xoá chỉ là **ẩn (soft delete)**. Báo cáo lưu cả id lẫn tên tại thời điểm nhập, nên báo cáo cũ và thống kê không bị sai.
 
@@ -150,7 +148,7 @@ reports/{reportId}
   samples[]       : { product, lot, quantity }                                 // ý 5
   lineAreas[]     : { area, items[]: { name, result, note } }                  // ý 6
   outbound[]      : { product, result, failQty, note }                         // ý 7
-  nonconformities[]: { description, causeId, causeName, actionId, actionName, quantity } // Phần 2
+  nonconformities[]: { description, causeId, causeName, quantity } // Phần 2
   createdAt, updatedAt
 
 images/{imageId}            : { chunkCount, createdAt }
@@ -158,7 +156,6 @@ images/{imageId}/chunks/{n} : { data: "<base64>" }
 
 suppliers/{id} : { name, active }
 ncCauses/{id}  : { name, active }
-ncActions/{id} : { name, active }
 ```
 
 `result` có giá trị `"pass" | "fail" | null`.

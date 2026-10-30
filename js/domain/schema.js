@@ -10,7 +10,6 @@ export const RESULT_LABEL = { pass: 'Đạt', fail: 'Không đạt' };
 export const CATALOG_TYPES = {
   suppliers: { key: 'suppliers', label: 'Nhà cung cấp', singular: 'nhà cung cấp' },
   ncCauses: { key: 'ncCauses', label: 'Nguyên nhân KPH', singular: 'nguyên nhân' },
-  ncActions: { key: 'ncActions', label: 'Hình thức xử lý', singular: 'hình thức xử lý' },
 };
 
 export const SEED_SUPPLIERS = [
@@ -50,7 +49,7 @@ export const createRow = {
   samples: () => ({ _k: uid(8), product: '', lot: '', quantity: '' }),
   lineAreas: () => ({ _k: uid(8), area: '', items: LINE_ITEMS.map((name) => ({ name, result: null, note: '' })) }),
   outbound: () => ({ _k: uid(8), product: '', result: null, failQty: '', note: '' }),
-  nonconformities: () => ({ _k: uid(8), description: '', causeId: null, causeName: '', actionId: null, actionName: '', quantity: '' }),
+  nonconformities: () => ({ _k: uid(8), description: '', causeId: null, causeName: '', quantity: '' }),
 };
 
 export function createEmptyForm({ date, reporter }) {
@@ -108,7 +107,6 @@ export function reportToForm(doc) {
     nonconformities: (doc.nonconformities || []).map((r) => ({
       _k: uid(8), description: str(r.description),
       causeId: r.causeId || null, causeName: str(r.causeName),
-      actionId: r.actionId || null, actionName: str(r.actionName),
       quantity: numText(r.quantity),
     })),
   };
@@ -151,11 +149,10 @@ export function formToReport(form) {
       .filter((r) => !isBlank(r.product) || r.result || !isBlank(r.failQty) || !isBlank(r.note))
       .map((r) => ({ product: t(r.product), result: r.result, failQty: n(r.failQty), note: t(r.note) })),
     nonconformities: form.nonconformities
-      .filter((r) => !isBlank(r.description) || r.causeId || r.actionId || !isBlank(r.quantity))
+      .filter((r) => !isBlank(r.description) || r.causeId || !isBlank(r.quantity))
       .map((r) => ({
         description: t(r.description),
         causeId: r.causeId || null, causeName: r.causeId ? r.causeName : '',
-        actionId: r.actionId || null, actionName: r.actionId ? r.actionName : '',
         quantity: n(r.quantity),
       })),
   };

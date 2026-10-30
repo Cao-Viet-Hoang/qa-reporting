@@ -1,4 +1,4 @@
-// Catalog management: segmented tabs (Nhà cung cấp / Nguyên nhân KPH / Hình thức xử lý).
+// Catalog management: segmented tabs (Nhà cung cấp / Nguyên nhân KPH).
 // A single "add / filter" bar on top, items as a quiet list with inline rename, and hidden items
 // tucked into a collapsible group at the bottom (soft delete — history is never altered).
 import { h, clear, createDisposer, focusLater } from '../core/dom.js';

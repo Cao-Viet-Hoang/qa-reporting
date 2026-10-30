@@ -17,7 +17,6 @@ function rng(seed) {
 }
 
 const CAUSES = ['Bao bì rách, móp', 'Sai thông số nhiệt độ', 'Nhãn in mờ / sai', 'Dị vật trong sản phẩm', 'Hàm lượng ẩm cao', 'Thao tác sai quy trình', 'Thiếu khối lượng'];
-const ACTIONS = ['Huỷ', 'Trả NCC', 'Tái chế', 'Chọn lọc lại', 'Hạ cấp sử dụng'];
 const PRODUCTS = ['Bột ngọt', 'Muối tinh', 'Tiêu đen xay', 'Dầu cọ', 'Bột mì', 'Tỏi sấy', 'Ớt bột', 'Đường kính', 'Màng ghép OPP'];
 const FINISHED = ['Xốt muối', 'Tương ớt', 'Tương đen', 'Gói gia vị mì', 'Dầu sa tế'];
 const REPORTERS = ['QC - Nguyên', 'QC - Hạnh', 'QC - Nguyên'];
@@ -30,7 +29,6 @@ export function buildDemoDatabase() {
 
   const suppliers = SEED_SUPPLIERS.map((name) => ({ id: seedIdFor(name), name, active: true }));
   const ncCauses = CAUSES.map((name, i) => ({ id: `demo-cause-${i}`, name, active: i !== CAUSES.length - 1 }));
-  const ncActions = ACTIONS.map((name, i) => ({ id: `demo-action-${i}`, name, active: true }));
   // Some suppliers fail more often, so the acceptance table tells a story.
   const failBias = Object.fromEntries(suppliers.map((s, i) => [s.id, [0.32, 0.22, 0.05, 0.12][i % 4]]));
 
@@ -49,11 +47,9 @@ export function buildDemoDatabase() {
     const ncCount = chance(0.55) ? 1 + Math.floor(rand() * 3) : 0;
     for (let i = 0; i < ncCount; i += 1) {
       const cause = ncCauses[Math.min(ncCauses.length - 1, Math.floor(Math.pow(rand(), 1.8) * ncCauses.length))];
-      const action = pick(ncActions);
       nc.push({
         description: `${pick(PRODUCTS)} — ${cause.name.toLowerCase()}`,
         causeId: cause.id, causeName: cause.name,
-        actionId: action.id, actionName: action.name,
         quantity: Math.round(rand() * 40) + 1,
       });
     }
@@ -78,5 +74,5 @@ export function buildDemoDatabase() {
       updatedAt: ts + 3600_000,
     };
   }
-  return { suppliers, ncCauses, ncActions, reports };
+  return { suppliers, ncCauses, reports };
 }

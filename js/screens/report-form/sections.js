@@ -318,14 +318,12 @@ function renderNonconformities(ctrl) {
       h('p', { class: 'ncs__empty-hint' }, 'Các mục "Không đạt" ở Phần 1 không tự động chuyển sang đây — chỉ thêm khi cần kiểm soát sự KPH.')),
     rows.map((row, i) => {
       const cause = catalogCombo(ctrl, 'ncCauses', row, 'causeId', 'causeName', 'Nguyên nhân', i);
-      const action = catalogCombo(ctrl, 'ncActions', row, 'actionId', 'actionName', 'Hình thức xử lý', i);
       return h('div', { class: 'nc', 'data-key': row._k },
         h('div', { class: 'nc__rail' }, h('span', { class: 'nc__no num' }, String(i + 1).padStart(2, '0'))),
         h('div', { class: 'nc__body' },
           field({ label: 'Sự KPH', control: textArea({ value: row.description, placeholder: 'Mô tả sự không phù hợp…', rows: 1, onInput: (v) => { row.description = v; ctrl.change(); } }), issue: issueKey(key, row._k, 'description'), cls: 'field--desc' }),
           h('div', { class: 'nc__grid' },
             field({ label: 'Nguyên nhân', control: cause.el, issue: issueKey(key, row._k, 'cause') }),
-            field({ label: 'Hình thức xử lý', control: action.el }),
             field({ label: 'Số lượng', control: numberInput({ value: row.quantity, placeholder: '0', label: 'Số lượng', onInput: (v) => { row.quantity = v; ctrl.change(); } }), issue: issueKey(key, row._k, 'quantity'), cls: 'field--qty-lg' }),
           ),
         ),

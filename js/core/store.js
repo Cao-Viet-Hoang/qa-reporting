@@ -20,5 +20,5 @@ export const appState = createStore({
   online: navigator.onLine,
   catalogStatus: 'idle',   // 'idle' | 'loading' | 'ready' | 'error'
   catalogError: null,
-  catalogs: { suppliers: [], ncCauses: [], ncActions: [] },
+  catalogs: { suppliers: [], ncCauses: [] },
 });

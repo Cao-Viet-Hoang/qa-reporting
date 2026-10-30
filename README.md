@@ -77,7 +77,7 @@ Khoảng ngày mặc định là 30 ngày, để giữ số lượt đọc thấ
 | 1 | Màn hình mật khẩu | Enter để gửi, có nút hiện/ẩn, có trạng thái loading và lỗi. Kiểm tra key bằng 1 lượt đọc thử |
 | 2 | Kết nối Firestore | Modular SDK v10 (CDN gstatic), phân loại lỗi mạng / quyền / hạn mức |
 | 3 | Seed 19 NCC | ID cố định (`seed-<slug>`) và dùng transaction, nên **không thể** tạo trùng dù mở trên nhiều máy |
-| 4–5 | Danh mục nguyên nhân KPH, hình thức xử lý | Ban đầu trống. Thêm được từ màn Danh mục hoặc ngay trong form |
+| 4–5 | Danh mục nguyên nhân KPH | Ban đầu trống. Thêm được từ màn Danh mục hoặc ngay trong form |
 | 6 | Phần 1, ý 1–7 | Mỗi ý là một khối thu gọn được. Khi đóng, khối hiện tóm tắt (số dòng, số không đạt, số ảnh) |
 | 7 | Phần 2 – Sự KPH | Là vùng riêng. Không tự sinh dòng từ các mục “Không đạt” |
 | 8 | Đạt / Không đạt | 2 nút lớn. Bấm lại nút đang chọn để bỏ chọn. Dòng không đạt được tô đỏ nhạt và có viền trái |
@@ -93,8 +93,8 @@ Khoảng ngày mặc định là 30 ngày, để giữ số lượt đọc thấ
 | 19 | Xoá ảnh + chunks | Xoá chunks và meta qua một hàng đợi bền (localStorage), tự chạy lại khi khởi động hoặc khi có mạng |
 | 20–22 | Danh sách báo cáo | Dạng timeline theo tháng, mỗi dòng có “dải 7 ý” cho biết ý nào đã nhập và ý nào không đạt. Mở rộng tại chỗ để xem chi tiết. Lọc khoảng ngày, xem/sửa/xoá có xác nhận |
 | 23 | Tỉ lệ chấp nhận NCC | Theo cách A, sắp xếp % từ thấp đến cao. Đánh dấu NCC dưới 80% |
-| 24 | Nguyên nhân KPH | Biểu đồ cột ngang, nhiều nhất ở trên, kèm tổng số lượng |
-| 25 | Hình thức xử lý | Số lần sử dụng |
+| 24 | Nguyên nhân KPH | Biểu đồ Pareto (theo số lần hoặc số lượng), tô đậm nhóm nguyên nhân chiếm 80%, kèm bảng số liệu |
+| 25 | Tổng quan & diễn biến | Hàng KPI (tỉ lệ chấp nhận chung, số lần kiểm, sự KPH, số NCC dưới 80%) và biểu đồ tỉ lệ chấp nhận + số sự KPH theo ngày/tuần/tháng |
 | 26 | Soft delete danh mục | Ẩn / Hiện lại / Đổi tên. Báo cáo lưu cả `id` lẫn `tên` tại thời điểm nhập |
 
 **Thêm ngoài PLAN:** chế độ demo, Ctrl/Cmd+S để lưu nháp, hỗ trợ dark mode, `prefers-reduced-motion`, nút ± để nhập số âm (vì bàn phím số trên điện thoại thường không có dấu trừ).

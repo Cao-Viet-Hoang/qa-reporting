@@ -292,7 +292,7 @@
 .nc__body { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
 .field--desc .input { font-weight: var(--weight-medium); }
 .nc__grid { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
-@media (min-width: 760px) { .nc__grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 120px; align-items: start; } }
+@media (min-width: 760px) { .nc__grid { grid-template-columns: minmax(0, 1fr) 140px; align-items: start; } }
 @media (max-width: 759px) { .nc__grid { grid-template-columns: 1fr; } }
 .field--qty-lg .input { font-size: var(--text-md); font-weight: var(--weight-bold); }
 @media (max-width: 599px) {
