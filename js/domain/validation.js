@@ -22,10 +22,6 @@ export function validateForm(form, status) {
     const n = parseNumber(r.failQty);
     if (!n.valid || (n.value != null && n.value < 0)) add('outbound', 'failQty', 'Số lượng không đạt phải là số ≥ 0.', r._k);
   });
-  form.nonconformities.forEach((r) => {
-    const n = parseNumber(r.quantity);
-    if (!n.valid || (n.value != null && n.value < 0)) add('nonconformities', 'quantity', 'Số lượng phải là số ≥ 0.', r._k);
-  });
 
   if (status !== STATUS.DONE) return issues;
 

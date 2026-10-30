@@ -43,3 +43,17 @@ export function createResultToggle({ value, onChange, label, size = 'md' }) {
   paint();
   return { el, focus: () => passBtn.focus() };
 }
+
+/** Compact Đạt / Không đạt dropdown for dense table rows. Empty option = no result yet. */
+export function createResultSelect({ value, onChange, label, id }) {
+  const select = h('select', { class: 'input select__input', id: id || null, 'aria-label': label || 'Kết quả' },
+    h('option', { value: '' }, 'Chọn kết quả'),
+    h('option', { value: RESULT.PASS }, 'Đạt'),
+    h('option', { value: RESULT.FAIL }, 'Không đạt'));
+  select.value = value || '';
+  const el = h('div', { class: 'select select--result' }, select, icon('chevronDown', { size: 16, cls: 'select__chev' }));
+  const paint = () => { el.dataset.value = select.value || 'none'; };
+  select.addEventListener('change', () => { paint(); onChange(select.value || null); });
+  paint();
+  return { el, select, focus: () => select.focus() };
+}

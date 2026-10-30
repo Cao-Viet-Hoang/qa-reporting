@@ -25,33 +25,32 @@ export function textInput({ value, placeholder, onInput, inputmode, cls, label, 
   return input;
 }
 
-export function textArea({ value, placeholder, onInput, rows = 2, label }) {
-  const ta = h('textarea', { class: 'input input--area', rows, placeholder: placeholder || '', 'aria-label': label || null, maxlength: 1000 });
+export function textArea({ value, placeholder, onInput, rows = 2, label, cls, maxlength = 1000 }) {
+  const ta = h('textarea', { class: ['input input--area', cls], rows, placeholder: placeholder || '', 'aria-label': label || null, maxlength });
   ta.value = value ?? '';
-  const fit = () => { ta.style.height = 'auto'; ta.style.height = `${Math.min(ta.scrollHeight + 2, 220)}px`; };
+  const fit = () => {
+    ta.style.height = 'auto';
+    // Not laid out yet (detached / display:none): keep the natural rows height.
+    if (ta.scrollHeight) ta.style.height = `${Math.min(ta.scrollHeight + 2, 220)}px`;
+  };
   ta.addEventListener('input', () => { fit(); onInput(ta.value); });
   requestAnimationFrame(fit);
   return ta;
 }
 
-export function numberInput({ value, placeholder, onInput, label, suffix, allowNegative = false }) {
+/** Auto-growing note box: long text wraps onto new lines instead of scrolling sideways. */
+export function noteInput({ value, placeholder = 'Ghi chú…', onInput, label = 'Ghi chú' }) {
+  return textArea({ value, placeholder, onInput, label, rows: 1, cls: 'input--note', maxlength: 500 });
+}
+
+export function numberInput({ value, placeholder, onInput, label, suffix }) {
   const input = h('input', {
     class: 'input input--num num', type: 'text', inputmode: 'decimal', value: value ?? '',
     placeholder: placeholder || '', 'aria-label': label || null, autocomplete: 'off', maxlength: 12,
   });
   input.addEventListener('input', () => onInput(input.value));
-  if (!suffix && !allowNegative) return input;
-  // Mobile decimal keypads often lack "−", so negative-capable inputs get an explicit sign toggle.
-  const sign = allowNegative && h('button', {
-    class: 'num-field__sign', type: 'button', 'aria-label': 'Đổi dấu âm/dương', title: 'Đổi dấu',
-    onClick: () => {
-      const v = input.value.trim();
-      input.value = v.startsWith('-') ? v.slice(1) : `-${v}`;
-      onInput(input.value);
-      input.focus();
-    },
-  }, '±');
-  return h('div', { class: 'num-field' }, sign, input, suffix && h('span', { class: 'num-field__suffix' }, suffix));
+  if (!suffix) return input;
+  return h('div', { class: 'num-field' }, input, h('span', { class: 'num-field__suffix' }, suffix));
 }
 
 export function removeButton({ label, onClick }) {
@@ -66,7 +65,7 @@ export function addButton({ label, onClick }) {
 export function revealNote({ value, placeholder = 'Ghi chú…', onInput, forceOpen, label = 'Ghi chú' }) {
   const wrap = h('div', { class: 'note' });
   const openInput = (focus) => {
-    const input = textInput({ value, placeholder, onInput, label, cls: 'input--note' });
+    const input = noteInput({ value, placeholder, onInput, label });
     wrap.replaceChildren(input);
     wrap.classList.add('is-open');
     if (focus) input.focus();

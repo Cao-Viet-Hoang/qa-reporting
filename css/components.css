@@ -104,13 +104,18 @@
   position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
   font-size: var(--text-sm); color: var(--c-ink-3); pointer-events: none;
 }
-.num-field__sign {
-  flex: none; width: 40px; margin-right: -1px;
-  border: 1px solid var(--c-line-strong); border-radius: var(--radius-sm) 0 0 var(--radius-sm);
-  background: var(--c-surface-2); color: var(--c-ink-2); font-weight: var(--weight-semibold);
-}
-.num-field__sign + .input { border-top-left-radius: 0; border-bottom-left-radius: 0; }
-.num-field__sign:hover { background: var(--c-surface-3); }
+
+/* ============ Select (native, custom chevron) ============ */
+.select { position: relative; display: flex; }
+.select__input { appearance: none; -webkit-appearance: none; padding-right: 34px; cursor: pointer; text-overflow: ellipsis; }
+.select__chev { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--c-ink-3); pointer-events: none; display: inline-flex; }
+.select[data-value="none"] .select__input { color: var(--c-ink-4); }
+.select option { color: var(--c-ink); background: var(--c-surface); }
+.select.select--result[data-value="pass"] .select__input { color: var(--c-pass); background: var(--c-pass-soft); border-color: var(--c-pass-line); font-weight: var(--weight-semibold); }
+.select.select--result[data-value="fail"] .select__input { color: var(--c-fail); background: var(--c-fail-soft); border-color: var(--c-fail-line); font-weight: var(--weight-semibold); }
+.select.select--result[data-value="pass"] .select__chev { color: var(--c-pass); }
+.select.select--result[data-value="fail"] .select__chev { color: var(--c-fail); }
+.field.is-invalid .select .select__input { border-color: var(--c-fail); }
 
 /* ============ Result toggle (Đạt / Không đạt) ============ */
 .result {

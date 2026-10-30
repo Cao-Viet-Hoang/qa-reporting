@@ -2,6 +2,13 @@
 import { RESULT } from './schema.js';
 import { addDays, parseISODate, toISODate } from '../core/utils.js';
 
+/** NC quantity is free text with a unit ("12 kg", "3,5 thùng"); totals use its leading number. */
+export function qtyValue(q) {
+  if (typeof q === 'number') return Number.isFinite(q) ? q : 0;
+  const m = String(q ?? '').match(/\d+(?:[.,]\d+)?/);
+  return m ? Number(m[0].replace(',', '.')) : 0;
+}
+
 const keyOf = (id, name) => id || `name:${name}`;
 
 /**
@@ -36,7 +43,7 @@ function tally(reports, idKey, nameKey, withQty) {
       const key = keyOf(row[idKey], row[nameKey]);
       const entry = map.get(key) || { id: row[idKey], name: row[nameKey], count: 0, quantity: 0, lastDate: '' };
       entry.count += 1;
-      if (withQty && typeof row.quantity === 'number') entry.quantity += row.quantity;
+      if (withQty) entry.quantity += qtyValue(row.quantity);
       if (report.date >= entry.lastDate) { entry.lastDate = report.date; entry.name = row[nameKey] || entry.name; }
       map.set(key, entry);
     }
@@ -105,7 +112,7 @@ export function trendSeries(reports, { from, to } = {}) {
     }
     for (const row of report.nonconformities || []) {
       entry.ncCount += 1;
-      if (typeof row.quantity === 'number') entry.ncQuantity += row.quantity;
+      entry.ncQuantity += qtyValue(row.quantity);
     }
   }
   const buckets = [...map.values()].map((e) => ({ ...e, rate: e.inspections ? e.passes / e.inspections : null }));
@@ -120,7 +127,7 @@ export function rangeSummary(reports) {
     inspections: inspected.length,
     passes: inspected.filter((x) => x.result === RESULT.PASS).length,
     ncCount: ncRows.length,
-    ncQuantity: ncRows.reduce((n, r) => n + (typeof r.quantity === 'number' ? r.quantity : 0), 0),
+    ncQuantity: ncRows.reduce((n, r) => n + qtyValue(r.quantity), 0),
     ncUnclassified: ncRows.filter((r) => !r.causeId && !r.causeName).length,
   };
 }

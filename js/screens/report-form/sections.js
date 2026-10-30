@@ -5,11 +5,11 @@ import { h } from '../../core/dom.js';
 import { RESULT, createRow } from '../../domain/schema.js';
 import { catalogService } from '../../services/catalog-service.js';
 import { createCombobox } from '../../ui/combobox.js';
-import { createResultToggle } from '../../ui/result-toggle.js';
+import { createResultToggle, createResultSelect } from '../../ui/result-toggle.js';
 import { createImageField } from '../../ui/image-field.js';
 import { toast } from '../../ui/toast.js';
 import { icon } from '../../ui/icons.js';
-import { field, textInput, textArea, numberInput, removeButton, addButton, revealNote } from './fields.js';
+import { field, textInput, textArea, noteInput, numberInput, removeButton, addButton, revealNote, nextId } from './fields.js';
 
 const issueKey = (section, rowKey, fieldName) => `${section}|${rowKey || ''}|${fieldName}`;
 
@@ -68,7 +68,7 @@ function renderIncoming(ctrl) {
   const rows = ctrl.form.incoming;
   return h('div', { class: 'rows rows--table rows--incoming' },
     rows.length > 0 && h('div', { class: 'rows__head', 'aria-hidden': 'true' },
-      h('span', null, 'Nhà cung cấp'), h('span', null, 'Sản phẩm'), h('span', null, 'Kết quả'), h('span', null, 'Ghi chú'), h('span')),
+      h('span', null, 'Nhà cung cấp'), h('span', null, 'Sản phẩm'), h('span', null, 'Kết quả'), h('span')),
     rows.length === 0 && emptyHint('Chưa có lô hàng nào được kiểm.'),
     rows.map((row, i) => {
       let rowEl;
@@ -82,8 +82,10 @@ function renderIncoming(ctrl) {
         onChange: (v) => { row.supplierId = v?.id || null; row.supplierName = v?.name || ''; ctrl.change(); },
       });
       ctrl.track(key, combo.destroy);
-      const toggle = createResultToggle({
+      const resultId = nextId('res');
+      const result = createResultSelect({
         value: row.result,
+        id: resultId,
         label: `Kết quả dòng ${i + 1}`,
         onChange: (v) => { row.result = v; paintResult(rowEl, v); ctrl.change(); },
       });
@@ -92,8 +94,8 @@ function renderIncoming(ctrl) {
         field({ label: 'Nhà cung cấp', control: combo.el, issue: issueKey(key, row._k, 'supplier'), cls: 'field--supplier' }),
         field({ label: 'Sản phẩm', control: textInput({ value: row.product, placeholder: 'Tên sản phẩm', onInput: (v) => { row.product = v; ctrl.change(); } }), cls: 'field--product' }),
         h('div', { class: 'field field--result', 'data-issue': issueKey(key, row._k, 'result') },
-          h('span', { class: 'field__label' }, 'Kết quả'), toggle.el, h('span', { class: 'field__error', role: 'alert' })),
-        field({ label: 'Ghi chú', control: textInput({ value: row.note, placeholder: 'Ghi chú', onInput: (v) => { row.note = v; ctrl.change(); } }), cls: 'field--note' }),
+          h('label', { class: 'field__label', for: resultId }, 'Kết quả'), result.el, h('span', { class: 'field__error', role: 'alert' })),
+        field({ label: 'Ghi chú', control: noteInput({ value: row.note, onInput: (v) => { row.note = v; ctrl.change(); } }), cls: 'field--note' }),
         removeButton({ label: `Xoá dòng ${i + 1}`, onClick: () => removeRow(ctrl, key, row, `dòng ${row.supplierName || i + 1}`) }),
       );
       return rowEl;
@@ -170,7 +172,6 @@ function renderTemperature(ctrl) {
       placeholder: '—',
       label: `Nhiệt độ ${row.item}`,
       suffix: '°C',
-      allowNegative: true,
       onInput: (v) => { row.value = v; ctrl.change(); },
     });
     return h('div', { class: 'temp', 'data-issue': issueKey('temperature', '', `temp-${row.item}`) },
@@ -259,7 +260,7 @@ function renderOutbound(ctrl) {
   const rows = ctrl.form.outbound;
   return h('div', { class: 'rows rows--table rows--outbound' },
     rows.length > 0 && h('div', { class: 'rows__head', 'aria-hidden': 'true' },
-      h('span', null, 'Sản phẩm'), h('span', null, 'Kết quả'), h('span', null, 'SL không đạt'), h('span', null, 'Ghi chú'), h('span')),
+      h('span', null, 'Sản phẩm'), h('span', null, 'Kết quả'), h('span', null, 'SL không đạt'), h('span')),
     rows.length === 0 && emptyHint('Chưa kiểm tra xuất kho.'),
     rows.map((row, i) => {
       let rowEl;
@@ -280,7 +281,7 @@ function renderOutbound(ctrl) {
         field({ label: 'Sản phẩm', control: textInput({ value: row.product, placeholder: 'Tên sản phẩm', onInput: (v) => { row.product = v; ctrl.change(); } }), issue: issueKey(key, row._k, 'product'), cls: 'field--product' }),
         h('div', { class: 'field field--result' }, h('span', { class: 'field__label' }, 'Kết quả'), toggle.el),
         qtyField,
-        field({ label: 'Ghi chú', control: textInput({ value: row.note, placeholder: 'Ghi chú', onInput: (v) => { row.note = v; ctrl.change(); } }), cls: 'field--note' }),
+        field({ label: 'Ghi chú', control: noteInput({ value: row.note, onInput: (v) => { row.note = v; ctrl.change(); } }), cls: 'field--note' }),
         removeButton({ label: `Xoá dòng ${i + 1}`, onClick: () => removeRow(ctrl, key, row, `dòng ${row.product || i + 1}`) }),
       );
       syncQty();
@@ -326,7 +327,7 @@ function renderNonconformities(ctrl) {
           field({ label: 'Sự KPH', control: textArea({ value: row.description, placeholder: 'Mô tả sự không phù hợp…', rows: 1, onInput: (v) => { row.description = v; ctrl.change(); } }), issue: issueKey(key, row._k, 'description'), cls: 'field--desc' }),
           h('div', { class: 'nc__grid' },
             field({ label: 'Nguyên nhân', control: cause.el, issue: issueKey(key, row._k, 'cause') }),
-            field({ label: 'Số lượng', control: numberInput({ value: row.quantity, placeholder: '0', label: 'Số lượng', onInput: (v) => { row.quantity = v; ctrl.change(); } }), issue: issueKey(key, row._k, 'quantity'), cls: 'field--qty-lg' }),
+            field({ label: 'Số lượng', control: textInput({ value: row.quantity, placeholder: 'VD: 12 kg', label: 'Số lượng', maxlength: 60, onInput: (v) => { row.quantity = v; ctrl.change(); } }), issue: issueKey(key, row._k, 'quantity'), cls: 'field--qty-lg' }),
           ),
         ),
         removeButton({ label: `Xoá sự KPH ${i + 1}`, onClick: () => removeRow(ctrl, key, row, `sự KPH ${i + 1}`) }),

@@ -43,6 +43,16 @@
 @media (pointer: coarse) { .ws-reporter__wrap { height: var(--tap); } }
 @media (max-width: 759px) { .ws-reporter { flex-basis: 100%; max-width: none; order: 3; } }
 
+/* Header errors float under their field so the header row never changes height or shifts. */
+.ws-date, .ws-reporter { position: relative; }
+.ws-head .field__error {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 1;
+  padding: 2px var(--space-2); border-radius: var(--radius-sm);
+  background: var(--c-fail-soft); white-space: nowrap; box-shadow: var(--shadow-2);
+  animation: pop-in var(--dur-2) var(--ease-out);
+}
+.ws-reporter.is-invalid .ws-reporter__wrap { border-color: var(--c-fail); }
+
 .ws-head__actions { display: none; margin-left: auto; gap: var(--space-2); }
 @media (min-width: 1100px) { .ws-head__actions { display: flex; } }
 
@@ -211,16 +221,22 @@
   .rows--table .result__btn { white-space: nowrap; padding: 0 var(--space-2); }
   .row.is-new { animation-duration: 1.2s; }
 
-  .rows--incoming .rows__head, .rows--incoming .row { grid-template-columns: 22px minmax(170px, 1.3fr) minmax(120px, 1fr) 210px minmax(110px, 1fr) 32px; }
-  .rows--incoming .rows__head { padding-left: calc(var(--space-3) + 22px + var(--space-3)); grid-template-columns: minmax(170px, 1.3fr) minmax(120px, 1fr) 210px minmax(110px, 1fr) 32px; }
+  /* Note sits on its own line under the row's fields so it can wrap instead of being squeezed. */
+  .rows--table .row > .field--note { grid-column: 2 / -2; margin-top: calc(var(--space-1) * -1); }
+  .rows--table .row { align-items: start; }
+  .rows--table .row__index { padding-top: 10px; }
+  .rows--table .row__remove { margin-top: 4px; }
+
+  .rows--incoming .row { grid-template-columns: 22px minmax(0, 1.3fr) minmax(0, 1.2fr) 170px 32px; }
+  .rows--incoming .rows__head { padding-left: calc(var(--space-3) + 22px + var(--space-3)); grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) 170px 32px; }
   .rows--samples .rows__head, .rows--samples .row { grid-template-columns: 22px minmax(160px, 2fr) minmax(100px, 1fr) minmax(100px, 1fr) 32px; }
   .rows--samples .rows__head { padding-left: calc(var(--space-3) + 22px + var(--space-3)); grid-template-columns: minmax(160px, 2fr) minmax(100px, 1fr) minmax(100px, 1fr) 32px; }
-  .rows--outbound .rows__head, .rows--outbound .row { grid-template-columns: 22px minmax(140px, 1.4fr) 210px 110px minmax(110px, 1fr) 32px; }
-  .rows--outbound .rows__head { padding-left: calc(var(--space-3) + 22px + var(--space-3)); grid-template-columns: minmax(140px, 1.4fr) 210px 110px minmax(110px, 1fr) 32px; }
+  .rows--outbound .row { grid-template-columns: 22px minmax(0, 1fr) 210px 120px 32px; }
+  .rows--outbound .rows__head { padding-left: calc(var(--space-3) + 22px + var(--space-3)); grid-template-columns: minmax(0, 1fr) 210px 120px 32px; }
 }
 @media (max-width: 759px) {
-  .rows--outbound .row > .field--qty { grid-column: 1 / 2; }
-  .rows--outbound .row > .field--note { grid-column: 2 / 3; }
+  .rows--incoming .row > .field--product { grid-column: 1 / 2; }
+  .rows--incoming .row > .field--result { grid-column: 2 / 3; }
   .rows--samples .row > .field:nth-of-type(2) { grid-column: 1 / 2; }
   .rows--samples .row > .field:nth-of-type(3) { grid-column: 2 / 3; }
 }
@@ -297,9 +313,9 @@
 .nc__body { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
 .field--desc .input { font-weight: var(--weight-regular); }
 .nc__grid { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
-@media (min-width: 760px) { .nc__grid { grid-template-columns: minmax(0, 1fr) 140px; align-items: start; } }
+@media (min-width: 760px) { .nc__grid { grid-template-columns: minmax(0, 1fr) 180px; align-items: start; } }
 @media (max-width: 759px) { .nc__grid { grid-template-columns: 1fr; } }
-.field--qty-lg .input { font-size: var(--text-lg); font-weight: var(--weight-semibold); }
+.field--qty-lg .input { font-weight: var(--weight-semibold); }
 @media (max-width: 599px) {
   .nc { grid-template-columns: minmax(0, 1fr) auto; padding: var(--space-3); }
   .nc__rail { grid-column: 1 / -1; margin-bottom: -6px; }

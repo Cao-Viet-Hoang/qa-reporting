@@ -296,7 +296,7 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
       if (row) {
         row.classList.add('is-new');
         setTimeout(() => row.classList.remove('is-new'), 900);
-        focusLater(() => row.querySelector(focus.selector) || row.querySelector('input, textarea, button'));
+        focusLater(() => row.querySelector(focus.selector) || row.querySelector('input, select, textarea, button'));
       }
     }
   }
@@ -319,7 +319,7 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
   function focusSection(key) {
     SECTIONS.forEach((s) => { if (s.key !== key && s.part === 1 && open.has(s.key)) setOpen(s.key, false); });
     setOpen(key, true, { scroll: true });
-    const first = sectionEls[key].body.querySelector('input, textarea, [role="radio"]');
+    const first = sectionEls[key].body.querySelector('input, select, textarea, [role="radio"]');
     if (first && matchMedia('(pointer: fine)').matches) setTimeout(() => first.focus({ preventScroll: true }), 250);
   }
 
@@ -459,7 +459,7 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
       requestAnimationFrame(() => {
         const first = workspace.querySelector('.is-invalid');
         first?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        first?.querySelector('input, textarea, button')?.focus({ preventScroll: true });
+        first?.querySelector('input, select, textarea, button')?.focus({ preventScroll: true });
       });
       toast(found.length === 1 ? found[0].message : `Còn ${found.length} chỗ cần kiểm tra trước khi ${status === STATUS.DONE ? 'hoàn tất' : 'lưu'}.`, { type: 'warn' });
       return;
@@ -545,7 +545,12 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
     markDirty();
     revalidateIfShowing();
   });
-  reporterInput.addEventListener('input', () => { form.reporter = reporterInput.value; markDirty(); });
+  reporterInput.addEventListener('input', () => {
+    form.reporter = reporterInput.value;
+    // Remembered right away (not only on save) so the next new report is pre-filled.
+    if (form.reporter.trim()) storage.setString(STORAGE_KEYS.reporter, form.reporter.trim());
+    markDirty();
+  });
   reporterInput.addEventListener('change', revalidateIfShowing);
   workspace.addEventListener('input', () => { if (issues.length) setTimeout(revalidateIfShowing, 0); });
 

@@ -107,7 +107,8 @@ export function reportToForm(doc) {
     nonconformities: (doc.nonconformities || []).map((r) => ({
       _k: uid(8), description: str(r.description),
       causeId: r.causeId || null, causeName: str(r.causeName),
-      quantity: numText(r.quantity),
+      // Free text with unit ("12 kg"); older reports stored a plain number.
+      quantity: typeof r.quantity === 'number' ? numText(r.quantity) : str(r.quantity),
     })),
   };
 }
@@ -153,7 +154,7 @@ export function formToReport(form) {
       .map((r) => ({
         description: t(r.description),
         causeId: r.causeId || null, causeName: r.causeId ? r.causeName : '',
-        quantity: n(r.quantity),
+        quantity: t(r.quantity),
       })),
   };
 }
