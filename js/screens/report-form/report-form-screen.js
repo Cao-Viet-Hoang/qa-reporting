@@ -481,12 +481,15 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
           if (phase === 'report') syncEl.querySelector('.sync__text').textContent = 'Đang lưu báo cáo…';
         },
       });
+      // Compare BEFORE touching form.status, otherwise a draft → done save always looks like new edits.
+      const editedDuringSave = JSON.stringify(form) !== editsBefore;
       form.status = status;
       ctx.remoteStatus = status;
       ctx.baseUpdatedAt = updatedAt;
       lastSyncedAt = updatedAt;
       storage.setString(STORAGE_KEYS.reporter, form.reporter.trim());
-      if (JSON.stringify(form) === editsBefore) {
+      saving = false;
+      if (!editedDuringSave) {
         persistLocal.cancel();
         drafts.remove(ctx.reportId);
         setSync('clean');
@@ -494,6 +497,7 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
         // The user kept typing while we saved — keep those edits as a fresh local draft.
         persistLocal();
         persistLocal.flush();
+        setSync('local');
       }
       issues = [];
       paintIssues();

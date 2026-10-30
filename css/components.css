@@ -134,8 +134,11 @@
   border: 1px solid transparent;
   transition: background var(--dur-1), color var(--dur-1), border-color var(--dur-1), box-shadow var(--dur-1);
 }
+.result__btn > span:last-child { line-height: 1; }
 .result__btn .icon { opacity: 0.55; }
-.result__btn:hover { color: var(--c-ink); background: var(--c-surface); }
+/* Both halves read as equal buttons, so the toggle never looks lopsided whichever side is active. */
+.result__btn[aria-checked="false"] { background: var(--c-surface); border-color: var(--c-line); }
+.result__btn:hover { color: var(--c-ink); background: var(--c-surface); border-color: var(--c-line-strong); }
 .result__btn[aria-checked="true"] .icon { opacity: 1; }
 .result__btn--pass[aria-checked="true"] { background: var(--c-pass); color: #fff; box-shadow: var(--shadow-1); }
 .result__btn--fail[aria-checked="true"] { background: var(--c-fail); color: #fff; box-shadow: var(--shadow-1); }
