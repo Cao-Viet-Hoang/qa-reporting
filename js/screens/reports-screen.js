@@ -65,13 +65,36 @@ export function mountReports(container) {
       h('div', { class: 'local-drafts__head' },
         h('span', null, 'Đang dở trên máy này'),
         h('span', { class: 'local-drafts__hint' }, 'chưa lưu lên hệ thống')),
-      h('ul', { class: 'local-drafts__list' }, entries.map((e) => h('li', null,
-        h('a', { class: 'local-draft', href: `#/report/${e.reportId}` },
+      h('ul', { class: 'local-drafts__list' }, entries.map((e) => h('li', { class: 'local-drafts__item' },
+        h('a', { class: 'local-draft', href: `#/report/${e.reportId}/edit` },
           h('span', { class: 'local-draft__date num' }, formatDate(e.date)),
           h('span', { class: 'local-draft__who' }, e.reporter || 'Chưa có tên'),
           h('span', { class: 'local-draft__meta' }, e.isNew ? 'Báo cáo mới' : 'Sửa đổi', ' · ', formatDateTime(e.savedAt)),
-          icon('chevronRight', { size: 16, cls: 'local-draft__go' }))))),
+          icon('chevronRight', { size: 16, cls: 'local-draft__go' })),
+        h('button', {
+          class: 'icon-btn icon-btn--danger local-draft__remove', type: 'button',
+          'aria-label': `Xoá bản nháp ${formatDate(e.date)}`, title: 'Xoá bản nháp này', onClick: () => removeLocalDraft(e),
+        }, icon('trash', { size: 16 }))))),
     );
+  }
+
+  async function removeLocalDraft(entry) {
+    const draft = drafts.get(entry.reportId);
+    if (!draft) { renderLocalDrafts(); return; }
+    await confirmDialog({
+      title: entry.isNew ? 'Xoá bản nháp trên máy?' : 'Bỏ thay đổi chưa đồng bộ?',
+      message: entry.isNew
+        ? `Báo cáo ngày ${formatDate(entry.date)} (${entry.reporter || 'Chưa có tên'}) chưa từng được lưu lên hệ thống — xoá là mất hẳn, kể cả ảnh đã chụp.`
+        : `Chỉ bỏ các thay đổi chưa đồng bộ của báo cáo ngày ${formatDate(entry.date)}. Bản đã lưu trên hệ thống vẫn giữ nguyên.`,
+      confirmLabel: entry.isNew ? 'Xoá bản nháp' : 'Bỏ thay đổi',
+      tone: 'danger',
+      onConfirm: async () => {
+        await reportService.discardDraft(draft);
+        renderLocalDrafts();
+        if (!entry.isNew) renderList();
+        toast(entry.isNew ? 'Đã xoá bản nháp' : 'Đã bỏ thay đổi trên máy', { type: 'success' });
+      },
+    });
   }
 
   /* ---------- Timeline ---------- */
@@ -101,7 +124,7 @@ export function mountReports(container) {
 
     const el = h('article', { class: ['day', expanded && 'is-expanded', `day--${report.status}`], 'data-id': report.id },
       h('div', { class: 'day__main' },
-        h('a', { class: 'day__date', href: `#/report/${report.id}`, 'aria-label': `Mở báo cáo ${formatDate(report.date)}` },
+        h('a', { class: 'day__date', href: `#/report/${report.id}`, 'aria-label': `Xem báo cáo ${formatDate(report.date)}` },
           h('span', { class: 'day__dow' }, weekdayShort(report.date)),
           h('span', { class: 'day__num num' }, String(parseISODate(report.date).getDate()).padStart(2, '0'))),
         h('button', {
@@ -119,7 +142,8 @@ export function mountReports(container) {
             local && h('span', { class: 'status status--local', title: 'Có thay đổi trên máy chưa đồng bộ' }, 'Chưa đồng bộ')),
         ),
         h('div', { class: 'day__actions' },
-          h('a', { class: 'icon-btn', href: `#/report/${report.id}`, 'aria-label': 'Mở / sửa', title: 'Mở / sửa' }, icon('edit', { size: 17 })),
+          h('a', { class: 'icon-btn', href: `#/report/${report.id}`, 'aria-label': 'Xem báo cáo', title: 'Xem' }, icon('eye', { size: 17 })),
+          h('a', { class: 'icon-btn', href: `#/report/${report.id}/edit`, 'aria-label': 'Sửa báo cáo', title: 'Sửa' }, icon('edit', { size: 17 })),
           h('button', { class: 'icon-btn icon-btn--danger', type: 'button', 'aria-label': 'Xoá báo cáo', title: 'Xoá', onClick: () => remove(report) }, icon('trash', { size: 17 })),
         ),
       ),
@@ -136,7 +160,9 @@ export function mountReports(container) {
             h('ul', null, failing.items.map((t) => h('li', null, t)), failing.more > 0 && h('li', { class: 'more' }, `+${failing.more}`))),
           h('div', { class: 'day__detail-foot' },
             h('span', { class: 'day__stamp' }, report.updatedAt ? `Cập nhật ${formatDateTime(report.updatedAt)}` : ''),
-            h('a', { class: 'btn btn--soft btn--sm', href: `#/report/${report.id}` }, report.status === 'done' ? 'Xem & sửa' : 'Tiếp tục nhập', icon('chevronRight', { size: 15 }))),
+            h('span', { class: 'day__links' },
+              h('a', { class: 'btn btn--ghost btn--sm', href: `#/report/${report.id}/edit` }, icon('edit', { size: 15 }), report.status === 'done' ? 'Sửa' : 'Tiếp tục nhập'),
+              h('a', { class: 'btn btn--soft btn--sm', href: `#/report/${report.id}` }, 'Xem báo cáo', icon('chevronRight', { size: 15 })))),
         ),
       ),
     );

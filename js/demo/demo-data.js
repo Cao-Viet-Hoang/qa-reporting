@@ -50,6 +50,7 @@ export function buildDemoDatabase() {
       nc.push({
         description: `${pick(PRODUCTS)} — ${cause.name.toLowerCase()}`,
         causeId: cause.id, causeName: cause.name,
+        disposition: pick(['destroy', 'destroy', 'recycle', 'return']), dispositionNote: '',
         quantity: `${Math.round(rand() * 40) + 1} ${pick(['kg', 'gói', 'thùng'])}`,
       });
     }

@@ -1,7 +1,7 @@
 // Statistics (PLAN.md §4). Everything below is scoped by one date range:
-//  · KPI row — overall acceptance rate, inspections, NC count / quantity, suppliers under threshold;
+//  · KPI row — overall acceptance rate, inspections, NC count, suppliers under threshold;
 //  · trend — acceptance rate (line) above NC count (columns) on a shared time axis;
-//  · NC causes — Pareto chart (by occurrences or by quantity) with a ranked list as its legend;
+//  · NC causes — Pareto chart by occurrences, with a ranked list as its legend;
 //  · supplier acceptance (method A) — worst first, as a ranked table with an inline rate meter.
 import { h, clear, createDisposer } from '../core/dom.js';
 import { STORAGE_KEYS } from '../config/app-config.js';
@@ -26,7 +26,6 @@ export function mountStats(container) {
   const disposer = createDisposer();
   let range = resolveRange(readUi().statsRange || { preset: '30d' });
   let token = 0;
-  let paretoMetric = readUi().paretoMetric === 'quantity' ? 'quantity' : 'count';
   let charts = [];
 
   const metaEl = h('p', { class: 'page__meta' });
@@ -92,7 +91,7 @@ export function mountStats(container) {
         summary.inspections ? h('span', { class: 'num' }, `${formatNumber(summary.passes)}/${formatNumber(summary.inspections)} lần đạt`) : 'Chưa có lần kiểm',
         rate != null && rate < ATTENTION_RATE && 'is-low'),
       tile('Lần kiểm nguyên liệu', formatNumber(summary.inspections), h('span', { class: 'num' }, `${formatNumber(summary.reports)} báo cáo`)),
-      tile('Sự KPH', formatNumber(summary.ncCount), h('span', { class: 'num' }, `Tổng SL ${formatNumber(summary.ncQuantity)}`)),
+      tile('Sự KPH', formatNumber(summary.ncCount), h('span', { class: 'num' }, `ở ${formatNumber(summary.ncReports)}/${formatNumber(summary.reports)} báo cáo`)),
       tile(`NCC dưới ${formatPercent(ATTENTION_RATE)}`, formatNumber(low),
         low ? `trên ${formatNumber(suppliers.length)} NCC` : `Tất cả ${formatNumber(suppliers.length)} NCC đạt`,
         low > 0 && 'is-low'),
@@ -104,7 +103,7 @@ export function mountStats(container) {
   function trendBlock(reports) {
     const { unit, buckets } = trendSeries(reports, range);
     const unitText = { day: 'theo ngày', week: 'theo tuần', month: 'theo tháng' }[unit];
-    const chart = buckets.length > 1 ? createTrendChart({ buckets, unit, threshold: ATTENTION_RATE }) : null;
+    const chart = buckets.length > 1 ? createTrendChart({ buckets, unit }) : null;
     if (chart) charts.push(chart);
     return h('section', { class: 'panel panel--trend', 'aria-labelledby': 'st-trend' },
       h('header', { class: 'panel__head' },
@@ -126,89 +125,71 @@ export function mountStats(container) {
     const tail = causes.slice(PARETO_MAX - 1);
     return [...causes.slice(0, PARETO_MAX - 1), {
       id: null, name: `Khác (${tail.length} nguyên nhân)`, other: true,
-      count: tail.reduce((n, r) => n + r.count, 0), quantity: tail.reduce((n, r) => n + r.quantity, 0),
+      count: tail.reduce((n, r) => n + r.count, 0),
     }];
   }
 
   function causeBlock(causes, unclassified) {
-    const unitLabel = () => (paretoMetric === 'count' ? 'lần' : 'sản phẩm');
-    const seg = h('div', { class: 'seg seg--inline', role: 'radiogroup', 'aria-label': 'Tính theo' },
-      [['count', 'Số lần'], ['quantity', 'Số lượng']].map(([key, label]) => h('button', {
-        class: 'seg__btn', type: 'button', role: 'radio', 'data-key': key,
-        onClick: () => { paretoMetric = key; writeUi({ paretoMetric: key }); paint(); },
-      }, label)));
     const bodyEl = h('div', { class: 'pareto' });
     const panel = h('section', { class: 'panel panel--causes', 'aria-labelledby': 'st-cause' },
       h('header', { class: 'panel__head' },
         h('div', null,
           h('h2', { class: 'panel__title', id: 'st-cause' }, 'Nguyên nhân KPH'),
           h('p', { class: 'panel__sub' }, `Cột đỏ là nhóm nguyên nhân chiếm ${formatPercent(PARETO_CUT)} tổng — nên ưu tiên kiểm soát`)),
-        causes.length > 0 && seg),
+      ),
       bodyEl,
       unclassified > 0 && h('p', { class: 'panel__foot' }, icon('info', { size: 13 }), `${unclassified} sự KPH chưa chọn nguyên nhân không được tính.`),
     );
 
-    let chart = null;
-    function paint() {
-      seg.querySelectorAll('.seg__btn').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.key === paretoMetric)));
-      if (chart) { chart.destroy(); charts = charts.filter((c) => c !== chart); chart = null; }
-      clear(bodyEl);
-      if (!causes.length) {
-        bodyEl.append(emptyState({ icon: 'flag', title: 'Chưa có sự KPH được phân loại', text: 'Không có sự KPH nào có nguyên nhân trong khoảng ngày này.' }));
-        return;
-      }
-      const folded = foldTail(causes);
-      const rows = paretoCauses(folded.filter((r) => !r.other), paretoMetric, PARETO_CUT);
-      const other = folded.find((r) => r.other);
-      if (other) {
-        const total = folded.reduce((n, r) => n + r[paretoMetric], 0);
-        const scale = total ? (total - other[paretoMetric]) / total : 1;
-        rows.forEach((r) => { r.share *= scale; r.cumulative *= scale; });
-        let acc = 0;
-        rows.forEach((r) => { r.vital = r.value > 0 && acc < PARETO_CUT; acc += r.share; });
-        rows.push({ ...other, value: other[paretoMetric], share: total ? other[paretoMetric] / total : 0, cumulative: 1, vital: false });
-      }
-      if (rows.every((r) => r.value === 0)) {
-        bodyEl.append(emptyState({ icon: 'flag', title: 'Chưa ghi số lượng', text: 'Các sự KPH trong khoảng ngày này chưa có số lượng.' }));
-        return;
-      }
-      const vital = rows.filter((r) => r.vital);
-      const vitalShare = vital.length ? vital[vital.length - 1].cumulative : 0;
-
-      const items = [];
-      chart = createParetoChart({
-        rows, unitLabel: unitLabel(), cut: PARETO_CUT,
-        onHover: (i) => items.forEach((li, k) => li.classList.toggle('is-active', k === i)),
-      });
-      charts.push(chart);
-
-      const list = h('ol', { class: 'plist', 'aria-label': 'Bảng số liệu nguyên nhân KPH' }, rows.map((r, i) => {
-        const li = h('li', {
-          class: ['plist__row', r.vital && 'is-vital'],
-          onPointerenter: () => chart.setActive(i), onPointerleave: () => chart.setActive(-1),
-        },
-          h('span', { class: 'plist__rank num' }, r.other ? '…' : i + 1),
-          h('span', { class: 'plist__name' }, r.name),
-          h('span', { class: 'plist__val num' }, h('b', null, formatNumber(r.value)), h('span', { class: 'plist__unit' }, ` ${unitLabel()}`)),
-          h('span', { class: 'plist__pct num' }, formatPercent(r.share)),
-          h('span', { class: 'plist__cum num' }, formatPercent(r.cumulative)));
-        items.push(li);
-        return li;
-      }));
-
-      bodyEl.append(
-        h('p', { class: 'insight' },
-          h('strong', null, `${vital.length} nguyên nhân`), ' gây ra ', h('strong', { class: 'num' }, formatPercent(vitalShare)),
-          paretoMetric === 'count' ? ' số lần KPH' : ' số lượng KPH',
-          h('span', { class: 'insight__meta' }, ` — nhiều nhất: ${rows[0].name}`)),
-        chart.el,
-        h('div', { class: 'plist__head', 'aria-hidden': 'true' },
-          h('span', null, '#'), h('span', null, 'Nguyên nhân'), h('span', null, paretoMetric === 'count' ? 'Số lần' : 'Số lượng'),
-          h('span', null, 'Tỉ trọng'), h('span', null, 'Luỹ kế')),
-        list,
-      );
+    if (!causes.length) {
+      bodyEl.append(emptyState({ icon: 'flag', title: 'Chưa có sự KPH được phân loại', text: 'Không có sự KPH nào có nguyên nhân trong khoảng ngày này.' }));
+      return panel;
     }
-    paint();
+    const folded = foldTail(causes);
+    const rows = paretoCauses(folded.filter((r) => !r.other), PARETO_CUT);
+    const other = folded.find((r) => r.other);
+    if (other) {
+      const total = folded.reduce((n, r) => n + r.count, 0);
+      const scale = (total - other.count) / total;
+      rows.forEach((r) => { r.share *= scale; r.cumulative *= scale; });
+      let acc = 0;
+      rows.forEach((r) => { r.vital = acc < PARETO_CUT; acc += r.share; });
+      rows.push({ ...other, value: other.count, share: other.count / total, cumulative: 1, vital: false });
+    }
+    const vital = rows.filter((r) => r.vital);
+    const vitalShare = vital.length ? vital[vital.length - 1].cumulative : 0;
+
+    const items = [];
+    const chart = createParetoChart({
+      rows, unitLabel: 'lần', cut: PARETO_CUT,
+      onHover: (i) => items.forEach((li, k) => li.classList.toggle('is-active', k === i)),
+    });
+    charts.push(chart);
+
+    const list = h('ol', { class: 'plist', 'aria-label': 'Bảng số liệu nguyên nhân KPH' }, rows.map((r, i) => {
+      const li = h('li', {
+        class: ['plist__row', r.vital && 'is-vital'],
+        onPointerenter: () => chart.setActive(i), onPointerleave: () => chart.setActive(-1),
+      },
+        h('span', { class: 'plist__rank num' }, r.other ? '…' : i + 1),
+        h('span', { class: 'plist__name' }, r.name),
+        h('span', { class: 'plist__val num' }, h('b', null, formatNumber(r.value)), h('span', { class: 'plist__unit' }, ' lần')),
+        h('span', { class: 'plist__pct num' }, formatPercent(r.share)),
+        h('span', { class: 'plist__cum num' }, formatPercent(r.cumulative)));
+      items.push(li);
+      return li;
+    }));
+
+    bodyEl.append(
+      h('p', { class: 'insight' },
+        h('strong', null, `${vital.length} nguyên nhân`), ' gây ra ', h('strong', { class: 'num' }, formatPercent(vitalShare)), ' số lần KPH',
+        h('span', { class: 'insight__meta' }, ` — nhiều nhất: ${rows[0].name}`)),
+      chart.el,
+      h('div', { class: 'plist__head', 'aria-hidden': 'true' },
+        h('span', null, '#'), h('span', null, 'Nguyên nhân'), h('span', null, 'Số lần'),
+        h('span', null, 'Tỉ trọng'), h('span', null, 'Luỹ kế')),
+      list,
+    );
     return panel;
   }
 

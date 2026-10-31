@@ -170,7 +170,7 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
       });
       if (!saving) setSync('local');
       // A new report gets a stable URL once something exists to restore on reload.
-      if (location.hash.startsWith('#/new')) router.replaceSilently(`/report/${ctx.reportId}`);
+      if (location.hash.startsWith('#/new')) router.replaceSilently(`/report/${ctx.reportId}/edit`);
     } catch (err) {
       setSync('error');
       toast(err.message, { type: 'error' });
@@ -185,7 +185,7 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
 
   /* ---------------- DOM skeleton ---------------- */
 
-  const back = h('a', { class: 'ws-back', href: '#/reports', 'aria-label': 'Về danh sách báo cáo', title: 'Về danh sách báo cáo' }, icon('arrowLeft', { size: 20 }));
+  const back = h('a', { class: 'ws-back' }, icon('arrowLeft', { size: 20 }));
   const dateInput = h('input', { class: 'ws-date__input', type: 'date', value: form.date, max: '2100-12-31', 'aria-label': 'Ngày báo cáo', required: true });
   const dateLabel = h('span', { class: 'ws-date__label' });
   const reporterInput = h('input', {
@@ -245,7 +245,6 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
     SECTIONS.filter((s) => s.part === 1).map((s) => sectionShell(s)));
   const part2 = h('section', { class: 'ws-part ws-part--nc', 'aria-labelledby': 'part2-title' },
     h('h2', { class: 'ws-part__title', id: 'part2-title' }, h('span', { class: 'ws-part__tag' }, 'Phần 2'), 'Kiểm soát sự KPH'),
-    h('p', { class: 'ws-part__lede' }, SECTION_BY_KEY.nonconformities.hint),
     sectionShell(SECTION_BY_KEY.nonconformities, { flat: true }));
 
   function sectionShell(s, { flat = false } = {}) {
@@ -263,7 +262,7 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
       icon('chevronDown', { size: 18, cls: 'sec__chev' }));
     const el = h('article', { class: ['sec', flat && 'sec--flat'], 'data-section': s.key },
       !flat && toggle,
-      h('div', { class: 'sec__panel' }, h('div', { class: 'sec__inner' }, s.hint && !flat && h('p', { class: 'sec__hint' }, s.hint), body)));
+      h('div', { class: 'sec__panel' }, h('div', { class: 'sec__inner' }, body)));
     sectionEls[s.key] = { el, body, summaryEl, toggle, flat, rendered: false };
     if (flat) open.add(s.key);
     return el;
@@ -405,6 +404,11 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
       b.title = isDone ? 'Lưu và chuyển trạng thái về Nháp' : 'Lưu lên hệ thống ở trạng thái Nháp';
     });
     workspace.dataset.status = status;
+    // Once the report exists on the server, "back" leads to its read-only view.
+    const backLabel = ctx.remoteStatus ? 'Về trang xem báo cáo' : 'Về danh sách báo cáo';
+    back.href = ctx.remoteStatus ? `#/report/${ctx.reportId}` : '#/reports';
+    back.setAttribute('aria-label', backLabel);
+    back.title = backLabel;
     setSync(syncState);
   }
 
@@ -538,7 +542,7 @@ function buildWorkspace(container, ctx, { notice, remote, disposer, shell }) {
     if (!ok) return;
     persistLocal.cancel();
     await reportService.discardDraft(draft);
-    router.navigate(`/report/${ctx.reportId}`);
+    router.navigate(`/report/${ctx.reportId}/edit`);
   }
 
   /* ---------------- Events ---------------- */

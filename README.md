@@ -93,7 +93,7 @@ Khoảng ngày mặc định là 30 ngày, để giữ số lượt đọc thấ
 | 19 | Xoá ảnh + chunks | Xoá chunks và meta qua một hàng đợi bền (localStorage), tự chạy lại khi khởi động hoặc khi có mạng |
 | 20–22 | Danh sách báo cáo | Dạng timeline theo tháng, mỗi dòng có “dải 7 ý” cho biết ý nào đã nhập và ý nào không đạt. Mở rộng tại chỗ để xem chi tiết. Lọc khoảng ngày, xem/sửa/xoá có xác nhận |
 | 23 | Tỉ lệ chấp nhận NCC | Theo cách A, sắp xếp % từ thấp đến cao. Đánh dấu NCC dưới 80% |
-| 24 | Nguyên nhân KPH | Biểu đồ Pareto (theo số lần hoặc số lượng), tô đậm nhóm nguyên nhân chiếm 80%, kèm bảng số liệu |
+| 24 | Nguyên nhân KPH | Biểu đồ Pareto theo số lần, tô đậm nhóm nguyên nhân chiếm 80%, kèm bảng số liệu |
 | 25 | Tổng quan & diễn biến | Hàng KPI (tỉ lệ chấp nhận chung, số lần kiểm, sự KPH, số NCC dưới 80%) và biểu đồ tỉ lệ chấp nhận + số sự KPH theo ngày/tuần/tháng |
 | 26 | Soft delete danh mục | Ẩn / Hiện lại / Đổi tên. Báo cáo lưu cả `id` lẫn `tên` tại thời điểm nhập |
 
@@ -118,7 +118,7 @@ css/
   base.css           reset + typography gốc
   components.css     button, input, result toggle, combobox, toast, dialog, ảnh, viewer, date range…
   layout.css         shell, navigation dạng viên thuốc mở rộng (header / bottom), page
-  screens/*.css      login, reports, form (workspace), stats, catalog
+  screens/*.css      login, reports, view, form (workspace), stats, catalog
 js/
   main.js            khởi động, router → screen, đăng xuất
   config/            firebase-config.js (template), app-config.js (hằng số, khoá storage)
@@ -129,7 +129,7 @@ js/
   domain/            schema.js (nghiệp vụ, mapping form↔doc), validation, stats, report-summary
   services/          access, catalog, report, image, cleanup-queue
   ui/                shell, icons, combobox, result-toggle, image-field, image-viewer, dialog, toast, date-range, states
-  screens/           login, reports, stats, catalog, report-form/ (screen, sections, fields)
+  screens/           login, reports, report-view, stats, catalog, report-form/ (screen, sections, fields)
   demo/              demo-data.js (dữ liệu mẫu có kiểm soát)
 ```
 

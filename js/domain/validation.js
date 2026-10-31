@@ -41,7 +41,7 @@ export function validateForm(form, status) {
     if (started && isBlank(r.product)) add('outbound', 'product', 'Dòng xuất kho cần tên sản phẩm.', r._k);
   });
   form.nonconformities.forEach((r) => {
-    const started = r.causeId || !isBlank(r.quantity);
+    const started = r.causeId || r.disposition || !isBlank(r.quantity);
     if (started && isBlank(r.description)) add('nonconformities', 'description', 'Mô tả sự KPH còn trống.', r._k);
     if (!isBlank(r.description) && !r.causeId) add('nonconformities', 'cause', 'Chọn nguyên nhân cho sự KPH.', r._k);
   });

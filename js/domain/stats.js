@@ -2,13 +2,6 @@
 import { RESULT } from './schema.js';
 import { addDays, parseISODate, toISODate } from '../core/utils.js';
 
-/** NC quantity is free text with a unit ("12 kg", "3,5 thùng"); totals use its leading number. */
-export function qtyValue(q) {
-  if (typeof q === 'number') return Number.isFinite(q) ? q : 0;
-  const m = String(q ?? '').match(/\d+(?:[.,]\d+)?/);
-  return m ? Number(m[0].replace(',', '.')) : 0;
-}
-
 const keyOf = (id, name) => id || `name:${name}`;
 
 /**
@@ -35,40 +28,37 @@ export function supplierAcceptance(reports) {
     .sort((a, b) => a.rate - b.rate || b.inspections - a.inspections || a.name.localeCompare(b.name, 'vi'));
 }
 
-function tally(reports, idKey, nameKey, withQty) {
+/**
+ * NC causes by number of occurrences, most frequent first. Quantities are not summed: they are free
+ * text in mixed units ("12 kg", "3 thùng"), so a total would mean nothing.
+ */
+export function ncCauseStats(reports) {
   const map = new Map();
   for (const report of reports) {
     for (const row of report.nonconformities || []) {
-      if (!row[idKey] && !row[nameKey]) continue;
-      const key = keyOf(row[idKey], row[nameKey]);
-      const entry = map.get(key) || { id: row[idKey], name: row[nameKey], count: 0, quantity: 0, lastDate: '' };
+      if (!row.causeId && !row.causeName) continue;
+      const key = keyOf(row.causeId, row.causeName);
+      const entry = map.get(key) || { id: row.causeId, name: row.causeName, count: 0, lastDate: '' };
       entry.count += 1;
-      if (withQty) entry.quantity += qtyValue(row.quantity);
-      if (report.date >= entry.lastDate) { entry.lastDate = report.date; entry.name = row[nameKey] || entry.name; }
+      if (report.date >= entry.lastDate) { entry.lastDate = report.date; entry.name = row.causeName || entry.name; }
       map.set(key, entry);
     }
   }
-  return [...map.values()];
-}
-
-/** NC causes: occurrences + total quantity. Most frequent first. */
-export function ncCauseStats(reports) {
-  return tally(reports, 'causeId', 'causeName', true)
-    .sort((a, b) => b.count - a.count || b.quantity - a.quantity || a.name.localeCompare(b.name, 'vi'));
+  return [...map.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'vi'));
 }
 
 /**
- * Pareto view of NC causes by `metric` ('count' | 'quantity'), largest first.
+ * Pareto view of NC causes by occurrences, largest first.
  * `share` / `cumulative` are fractions of the total; `vital` marks the causes that together
  * make up the first 80% (the cause that crosses 80% is included).
  */
-export function paretoCauses(causes, metric = 'count', cut = 0.8) {
-  const rows = [...causes].sort((a, b) => b[metric] - a[metric] || b.count - a.count || a.name.localeCompare(b.name, 'vi'));
-  const total = rows.reduce((n, r) => n + r[metric], 0);
+export function paretoCauses(causes, cut = 0.8) {
+  const rows = [...causes].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'vi'));
+  const total = rows.reduce((n, r) => n + r.count, 0);
   let before = 0;
   return rows.map((r) => {
-    const share = total ? r[metric] / total : 0;
-    const out = { ...r, value: r[metric], share, cumulative: before + share, vital: total > 0 && r[metric] > 0 && before < cut };
+    const share = total ? r.count / total : 0;
+    const out = { ...r, value: r.count, share, cumulative: before + share, vital: total > 0 && before < cut };
     before += share;
     return out;
   });
@@ -99,7 +89,7 @@ export function trendSeries(reports, { from, to } = {}) {
 
   const map = new Map();
   for (let key = b.start(start); key <= end; key = b.next(key)) {
-    map.set(key, { key, end: addDays(b.next(key), -1), inspections: 0, passes: 0, ncCount: 0, ncQuantity: 0 });
+    map.set(key, { key, end: addDays(b.next(key), -1), inspections: 0, passes: 0, ncCount: 0 });
   }
   for (const report of reports) {
     const entry = map.get(b.start(report.date));
@@ -110,10 +100,7 @@ export function trendSeries(reports, { from, to } = {}) {
       entry.inspections += 1;
       if (row.result === RESULT.PASS) entry.passes += 1;
     }
-    for (const row of report.nonconformities || []) {
-      entry.ncCount += 1;
-      entry.ncQuantity += qtyValue(row.quantity);
-    }
+    entry.ncCount += (report.nonconformities || []).length;
   }
   const buckets = [...map.values()].map((e) => ({ ...e, rate: e.inspections ? e.passes / e.inspections : null }));
   return { unit, buckets };
@@ -127,7 +114,7 @@ export function rangeSummary(reports) {
     inspections: inspected.length,
     passes: inspected.filter((x) => x.result === RESULT.PASS).length,
     ncCount: ncRows.length,
-    ncQuantity: ncRows.reduce((n, r) => n + qtyValue(r.quantity), 0),
+    ncReports: reports.filter((r) => (r.nonconformities || []).length > 0).length,
     ncUnclassified: ncRows.filter((r) => !r.causeId && !r.causeName).length,
   };
 }

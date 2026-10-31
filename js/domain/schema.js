@@ -7,6 +7,10 @@ export const STATUS = Object.freeze({ DRAFT: 'draft', DONE: 'done' });
 export const STATUS_LABEL = { draft: 'Nháp', done: 'Hoàn tất', new: 'Chưa lưu' };
 export const RESULT_LABEL = { pass: 'Đạt', fail: 'Không đạt' };
 
+/** Hình thức xử lý sự KPH (Phần 2). "Khác" comes with a free-text detail. */
+export const DISPOSITION = Object.freeze({ DESTROY: 'destroy', RECYCLE: 'recycle', RETURN: 'return', OTHER: 'other' });
+export const DISPOSITION_LABEL = { destroy: 'Hủy', recycle: 'Tái chế', return: 'Trả hàng', other: 'Khác' };
+
 export const CATALOG_TYPES = {
   suppliers: { key: 'suppliers', label: 'Nhà cung cấp', singular: 'nhà cung cấp' },
   ncCauses: { key: 'ncCauses', label: 'Nguyên nhân KPH', singular: 'nguyên nhân' },
@@ -28,14 +32,14 @@ export const TEMPERATURE_ITEMS = ['Tủ mát', 'Kho NL', 'Kho BTP', 'Kho TP'];
 export const LINE_ITEMS = ['Thao tác', 'Thông số kỹ thuật', 'BTP', 'Thành phẩm'];
 
 export const SECTIONS = [
-  { key: 'incoming', no: '1', part: 1, title: 'Kiểm tra nguyên liệu / nguyên vật liệu đầu vào', short: 'Nguyên liệu đầu vào', hint: 'Mỗi dòng là một lần kiểm lô hàng của NCC — dùng để tính tỉ lệ chấp nhận.' },
-  { key: 'hygienePersonal', no: '2', part: 1, title: 'Vệ sinh cá nhân, BHLĐ nhân viên sản xuất', short: 'Vệ sinh cá nhân, BHLĐ', hint: 'Không bắt buộc điền hết — có thông tin gì điền nấy.' },
-  { key: 'hygieneOther', no: '3', part: 1, title: 'Vệ sinh các hạng mục khác', short: 'Vệ sinh hạng mục khác', hint: 'Không bắt buộc điền hết.' },
-  { key: 'temperature', no: '4', part: 1, title: 'Kiểm tra nhiệt độ kho bảo quản', short: 'Nhiệt độ kho', hint: 'Nhiệt độ thực tế (°C), nhập được số âm.' },
+  { key: 'incoming', no: '1', part: 1, title: 'Kiểm tra nguyên liệu / nguyên vật liệu đầu vào', short: 'Nguyên liệu đầu vào' },
+  { key: 'hygienePersonal', no: '2', part: 1, title: 'Vệ sinh cá nhân, BHLĐ nhân viên sản xuất', short: 'Vệ sinh cá nhân, BHLĐ' },
+  { key: 'hygieneOther', no: '3', part: 1, title: 'Vệ sinh các hạng mục khác', short: 'Vệ sinh hạng mục khác' },
+  { key: 'temperature', no: '4', part: 1, title: 'Kiểm tra nhiệt độ kho bảo quản', short: 'Nhiệt độ kho' },
   { key: 'samples', no: '5', part: 1, title: 'Mẫu lưu', short: 'Mẫu lưu' },
-  { key: 'lineAreas', no: '6', part: 1, title: 'Kiểm soát line sản xuất', short: 'Line sản xuất', hint: 'Mỗi khu vực gồm 4 hạng mục. Không bắt buộc điền.' },
+  { key: 'lineAreas', no: '6', part: 1, title: 'Kiểm soát line sản xuất', short: 'Line sản xuất' },
   { key: 'outbound', no: '7', part: 1, title: 'Kiểm tra xuất kho', short: 'Xuất kho' },
-  { key: 'nonconformities', no: '', part: 2, title: 'Kiểm soát sự KPH', short: 'Sự KPH', hint: 'Ghi nhận từng sự không phù hợp để tìm nguyên nhân xuất hiện nhiều nhất.' },
+  { key: 'nonconformities', no: '', part: 2, title: 'Kiểm soát sự KPH', short: 'Sự KPH' },
 ];
 
 export const SECTION_BY_KEY = Object.fromEntries(SECTIONS.map((s) => [s.key, s]));
@@ -49,7 +53,7 @@ export const createRow = {
   samples: () => ({ _k: uid(8), product: '', lot: '', quantity: '' }),
   lineAreas: () => ({ _k: uid(8), area: '', items: LINE_ITEMS.map((name) => ({ name, result: null, note: '' })) }),
   outbound: () => ({ _k: uid(8), product: '', result: null, failQty: '', note: '' }),
-  nonconformities: () => ({ _k: uid(8), description: '', causeId: null, causeName: '', quantity: '' }),
+  nonconformities: () => ({ _k: uid(8), description: '', causeId: null, causeName: '', disposition: null, dispositionNote: '', quantity: '' }),
 };
 
 export function createEmptyForm({ date, reporter }) {
@@ -73,6 +77,7 @@ export function createEmptyForm({ date, reporter }) {
 const str = (v) => (v == null ? '' : String(v));
 const numText = (v) => (v == null ? '' : String(v).replace('.', ','));
 const result = (v) => (v === RESULT.PASS || v === RESULT.FAIL ? v : null);
+const disposition = (v) => (Object.values(DISPOSITION).includes(v) ? v : null);
 
 /** Fixed lists keep PLAN.md order; unknown stored items (future renames) are appended, never dropped. */
 function mergeFixed(fixedNames, stored, makeEmpty, mapStored) {
@@ -107,6 +112,7 @@ export function reportToForm(doc) {
     nonconformities: (doc.nonconformities || []).map((r) => ({
       _k: uid(8), description: str(r.description),
       causeId: r.causeId || null, causeName: str(r.causeName),
+      disposition: disposition(r.disposition), dispositionNote: str(r.dispositionNote),
       // Free text with unit ("12 kg"); older reports stored a plain number.
       quantity: typeof r.quantity === 'number' ? numText(r.quantity) : str(r.quantity),
     })),
@@ -150,10 +156,12 @@ export function formToReport(form) {
       .filter((r) => !isBlank(r.product) || r.result || !isBlank(r.failQty) || !isBlank(r.note))
       .map((r) => ({ product: t(r.product), result: r.result, failQty: n(r.failQty), note: t(r.note) })),
     nonconformities: form.nonconformities
-      .filter((r) => !isBlank(r.description) || r.causeId || !isBlank(r.quantity))
+      .filter((r) => !isBlank(r.description) || r.causeId || r.disposition || !isBlank(r.quantity))
       .map((r) => ({
         description: t(r.description),
         causeId: r.causeId || null, causeName: r.causeId ? r.causeName : '',
+        disposition: r.disposition || null,
+        dispositionNote: r.disposition === DISPOSITION.OTHER ? t(r.dispositionNote) : '',
         quantity: t(r.quantity),
       })),
   };

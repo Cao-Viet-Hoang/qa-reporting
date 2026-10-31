@@ -9,10 +9,13 @@
 .local-drafts__head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 var(--space-2); padding-bottom: var(--space-2); font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--c-warn); }
 .local-drafts__hint { font-weight: var(--weight-regular); color: var(--c-ink-3); }
 .local-drafts__list { display: flex; flex-direction: column; }
+.local-drafts__item { display: flex; align-items: center; gap: var(--space-2); border-top: 1px solid var(--c-warn-line); }
+.local-draft__remove { flex: none; }
 .local-draft {
+  flex: 1; min-width: 0;
   display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "date who go" "date meta go";
   column-gap: var(--space-4); align-items: center;
-  padding: var(--space-2) 0; border-top: 1px solid var(--c-warn-line);
+  padding: var(--space-2) 0;
   color: var(--c-ink); text-decoration: none !important;
 }
 .local-draft:hover .local-draft__who { text-decoration: underline; }
@@ -96,6 +99,10 @@
 
 .skeleton--timeline .skeleton__block { width: 40px; height: 44px; }
 @media (max-width: 599px) {
-  .strip { display: none; }
   .day__main { gap: var(--space-3); }
+  .day__line2 { flex-direction: column; align-items: flex-start; gap: var(--space-1); }
+  .day__facts { row-gap: 0; }
+  .day__body { grid-template-columns: minmax(0, 1fr); grid-template-areas: "l1" "l2" "tags"; }
+  .day__tags { flex-direction: row; align-items: center; }
 }
+.day__links { display: flex; gap: var(--space-2); flex-wrap: wrap; }

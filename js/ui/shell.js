@@ -6,7 +6,7 @@ import { router } from '../core/router.js';
 import { icon } from './icons.js';
 
 const NAV = [
-  { key: 'reports', label: 'Báo cáo', icon: 'reports', path: '/reports', match: ['reports', 'report', 'new'] },
+  { key: 'reports', label: 'Báo cáo', icon: 'reports', path: '/reports', match: ['reports', 'report', 'edit', 'new'] },
   { key: 'stats', label: 'Thống kê', icon: 'stats', path: '/stats', match: ['stats'] },
   { key: 'catalog', label: 'Danh mục', icon: 'catalog', path: '/catalog', match: ['catalog'] },
 ];

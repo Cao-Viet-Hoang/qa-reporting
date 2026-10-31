@@ -113,7 +113,6 @@
 .ws-part__title { display: flex; align-items: baseline; gap: var(--space-2); font-size: var(--text-lg); font-weight: var(--weight-semibold); margin-bottom: var(--space-2); }
 .ws-part__tag { color: var(--c-ink-3); font-weight: var(--weight-regular); }
 .ws-part__tag::after { content: " ·"; }
-.ws-part__lede { font-size: var(--text-sm); color: var(--c-ink-3); margin: calc(var(--space-2) * -1) 0 var(--space-3); }
 
 /* Phần 2 sits on its own surface so it reads as a separate zone. */
 .ws-part--nc {
@@ -160,12 +159,10 @@
 .sec.is-open .sec__inner { overflow: visible; animation: delay-visible var(--dur-3); }
 @keyframes delay-visible { from { overflow: hidden; } to { overflow: hidden; } }
 .sec:not(.is-open) .sec__inner { visibility: hidden; transition: visibility 0s var(--dur-3); }
-.sec__hint { font-size: var(--text-sm); color: var(--c-ink-3); padding: 0 var(--space-4) var(--space-3) calc(var(--space-4) + 24px + var(--space-3)); }
 .sec__body { padding: var(--space-1) var(--space-4) var(--space-5); }
 .sec--flat .sec__body { padding: 0; }
 @media (max-width: 599px) {
   .sec.is-open:not(.sec--flat) { margin-left: calc(var(--space-4) * -1); margin-right: calc(var(--space-4) * -1); border-radius: 0; }
-  .sec__hint { padding-left: var(--space-4); }
   .sec__body { padding: var(--space-1) var(--space-3) var(--space-4); }
 }
 
@@ -224,8 +221,10 @@
   /* Note sits on its own line under the row's fields so it can wrap instead of being squeezed. */
   .rows--table .row > .field--note { grid-column: 2 / -2; margin-top: calc(var(--space-1) * -1); }
   .rows--table .row { align-items: start; }
-  .rows--table .row__index { padding-top: 10px; }
-  .rows--table .row__remove { margin-top: 4px; }
+  /* Index and trash sit on the first line, centered on the inputs' height (not padded by guesswork). */
+  .rows--table .row__index { display: flex; align-items: center; height: var(--h-md); }
+  .rows--table .row__remove { grid-row: 1; grid-column: -2; margin-top: calc((var(--h-md) - var(--h-sm)) / 2); }
+  .rows--table .row > .field--note { grid-row: 2; }
 
   .rows--incoming .row { grid-template-columns: 22px minmax(0, 1.3fr) minmax(0, 1.2fr) 170px 32px; }
   .rows--incoming .rows__head { padding-left: calc(var(--space-3) + 22px + var(--space-3)); grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) 170px 32px; }
@@ -248,7 +247,10 @@
 .check { padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border-bottom: 1px solid var(--c-line); }
 .check:last-child { border-bottom-color: transparent; }
 .check.is-fail { border-bottom-color: transparent; margin: 2px 0; }
-.check__main { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--space-2) var(--space-3); }
+/* The last column is always as wide as the note button, even once the note opens onto its own line —
+   otherwise the Đạt / Không đạt toggle jumps sideways when an item is marked "Không đạt". */
+.check__main { --note-col: var(--h-sm); display: grid; grid-template-columns: minmax(0, 1fr) auto var(--note-col); align-items: center; gap: var(--space-2) var(--space-3); }
+@media (pointer: coarse) { .check__main { --note-col: var(--tap); } }
 .check__name { font-size: var(--text-base); }
 .check__note { display: contents; }
 .check__note .note.is-open { grid-column: 1 / -1; }
@@ -288,7 +290,8 @@
 .area__items { display: flex; flex-direction: column; }
 .line-item { display: grid; grid-template-columns: minmax(120px, 1fr) auto; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--c-line); }
 .line-item:first-child { border-top: 0; }
-.line-item { grid-template-columns: minmax(0, 1fr) auto auto; }
+.line-item { --note-col: var(--h-sm); grid-template-columns: minmax(0, 1fr) auto var(--note-col); }
+@media (pointer: coarse) { .line-item { --note-col: var(--tap); } }
 .line-item__name { font-size: var(--text-base); }
 .line-item__note:has(.note.is-open) { grid-column: 1 / -1; }
 @media (min-width: 760px) {
@@ -299,7 +302,6 @@
 /* ---------- Phần 2 — nonconformities ---------- */
 .ncs { display: flex; flex-direction: column; gap: var(--space-3); }
 .ncs__empty { padding: var(--space-2) 0; color: var(--c-ink-2); font-size: var(--text-base); }
-.ncs__empty-hint { margin-top: var(--space-1); color: var(--c-ink-3); font-size: var(--text-sm); max-width: 520px; }
 .nc {
   position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: var(--space-3);
   padding: var(--space-4) var(--space-2) var(--space-4) var(--space-3);
@@ -316,6 +318,20 @@
 @media (min-width: 760px) { .nc__grid { grid-template-columns: minmax(0, 1fr) 180px; align-items: start; } }
 @media (max-width: 759px) { .nc__grid { grid-template-columns: 1fr; } }
 .field--qty-lg .input { font-weight: var(--weight-semibold); }
+.disp { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 2px; border-radius: var(--radius-md); background: var(--c-surface-2); max-width: 440px; }
+.disp__btn {
+  min-height: var(--h-md); padding: 0 var(--space-2); border-radius: var(--radius-sm);
+  font-size: var(--text-sm); color: var(--c-ink-2); white-space: nowrap;
+  transition: background var(--dur-1), color var(--dur-1);
+}
+.disp__btn:hover { color: var(--c-ink); background: var(--c-surface); }
+.disp__btn[aria-checked="true"] { background: var(--c-surface); color: var(--c-ink); font-weight: var(--weight-semibold); box-shadow: var(--shadow-1); }
+@media (pointer: coarse) { .disp__btn { min-height: var(--tap); } }
+@media (min-width: 760px) and (pointer: coarse) {
+  .rows--table .row__index { height: var(--tap); }
+  .rows--table .row__remove { margin-top: 0; }
+}
+.disp__other { margin-top: var(--space-2); max-width: 440px; }
 @media (max-width: 599px) {
   .nc { grid-template-columns: minmax(0, 1fr) auto; padding: var(--space-3); }
   .nc__rail { grid-column: 1 / -1; margin-bottom: -6px; }

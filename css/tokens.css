@@ -69,6 +69,7 @@
   --c-fail: #be3a31;
   --c-fail-soft: #fcefec;
   --c-fail-line: #f0c8c1;
+  --c-fail-strong: #8f241d; /* dense data marks (NC columns) */
   --c-warn: #8a560b;
   --c-warn-soft: #fbf3e2;
   --c-warn-line: #ecd7a6;
@@ -139,6 +140,7 @@
     --c-fail: #f08377;
     --c-fail-soft: #331b19;
     --c-fail-line: #5e2c27;
+    --c-fail-strong: #ff6a5c;
     --c-warn: #e2b05a;
     --c-warn-soft: #2e2414;
     --c-warn-line: #5a4520;

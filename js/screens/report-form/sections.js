@@ -2,7 +2,7 @@
 // changes through ctrl.change(). Inputs are never re-rendered while typing; only structural
 // changes (add/remove rows) re-render a single section body, from state, so nothing is lost.
 import { h } from '../../core/dom.js';
-import { RESULT, createRow } from '../../domain/schema.js';
+import { RESULT, DISPOSITION, DISPOSITION_LABEL, createRow } from '../../domain/schema.js';
 import { catalogService } from '../../services/catalog-service.js';
 import { createCombobox } from '../../ui/combobox.js';
 import { createResultToggle, createResultSelect } from '../../ui/result-toggle.js';
@@ -312,13 +312,36 @@ function catalogCombo(ctrl, type, row, idKey, nameKey, label, index) {
   return combo;
 }
 
+/** Hình thức xử lý: one-tap choice; tapping the active one clears it. "Khác" reveals a detail input. */
+function dispositionField(ctrl, row, index) {
+  const otherInput = textInput({
+    value: row.dispositionNote, placeholder: 'Ghi rõ hình thức xử lý…', label: `Hình thức xử lý khác — sự KPH ${index + 1}`,
+    maxlength: 200, cls: 'disp__other', onInput: (v) => { row.dispositionNote = v; ctrl.change(); },
+  });
+  const buttons = Object.values(DISPOSITION).map((value) => h('button', {
+    class: 'disp__btn', type: 'button', role: 'radio', 'data-value': value,
+    onClick: () => {
+      row.disposition = row.disposition === value ? null : value;
+      paint();
+      if (row.disposition === DISPOSITION.OTHER) otherInput.focus();
+      ctrl.change();
+    },
+  }, DISPOSITION_LABEL[value]));
+  const group = h('div', { class: 'disp', role: 'radiogroup', 'aria-label': `Hình thức xử lý — sự KPH ${index + 1}` }, buttons);
+  function paint() {
+    buttons.forEach((b) => b.setAttribute('aria-checked', String(b.dataset.value === row.disposition)));
+    otherInput.hidden = row.disposition !== DISPOSITION.OTHER;
+  }
+  paint();
+  return h('div', { class: 'field field--disp' },
+    h('span', { class: 'field__label' }, 'Hình thức xử lý'), group, otherInput);
+}
+
 function renderNonconformities(ctrl) {
   const key = 'nonconformities';
   const rows = ctrl.form.nonconformities;
   return h('div', { class: 'ncs' },
-    rows.length === 0 && h('div', { class: 'ncs__empty' },
-      h('p', null, 'Chưa ghi nhận sự KPH nào.'),
-      h('p', { class: 'ncs__empty-hint' }, 'Các mục "Không đạt" ở Phần 1 không tự động chuyển sang đây — chỉ thêm khi cần kiểm soát sự KPH.')),
+    rows.length === 0 && h('p', { class: 'ncs__empty' }, 'Chưa ghi nhận sự KPH nào.'),
     rows.map((row, i) => {
       const cause = catalogCombo(ctrl, 'ncCauses', row, 'causeId', 'causeName', 'Nguyên nhân', i);
       return h('div', { class: 'nc', 'data-key': row._k },
@@ -329,6 +352,7 @@ function renderNonconformities(ctrl) {
             field({ label: 'Nguyên nhân', control: cause.el, issue: issueKey(key, row._k, 'cause') }),
             field({ label: 'Số lượng', control: textInput({ value: row.quantity, placeholder: 'VD: 12 kg', label: 'Số lượng', maxlength: 60, onInput: (v) => { row.quantity = v; ctrl.change(); } }), issue: issueKey(key, row._k, 'quantity'), cls: 'field--qty-lg' }),
           ),
+          dispositionField(ctrl, row, i),
         ),
         removeButton({ label: `Xoá sự KPH ${i + 1}`, onClick: () => removeRow(ctrl, key, row, `sự KPH ${i + 1}`) }),
       );

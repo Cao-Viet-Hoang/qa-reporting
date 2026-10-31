@@ -1,8 +1,9 @@
-// Hash router: #/reports, #/report/<id>, #/new, #/stats, #/catalog
+// Hash router: #/reports, #/report/<id> (view), #/report/<id>/edit, #/new, #/stats, #/catalog
 
 const ROUTES = [
   { name: 'reports', pattern: /^\/reports\/?$/ },
   { name: 'new', pattern: /^\/new\/?$/ },
+  { name: 'edit', pattern: /^\/report\/([A-Za-z0-9_-]+)\/edit\/?$/, params: ['id'] },
   { name: 'report', pattern: /^\/report\/([A-Za-z0-9_-]+)\/?$/, params: ['id'] },
   { name: 'stats', pattern: /^\/stats\/?$/ },
   { name: 'catalog', pattern: /^\/catalog\/?$/ },
@@ -34,7 +35,7 @@ export const router = {
     if (listener) window.removeEventListener('hashchange', listener);
     listener = null;
   },
-  /** Rewrites the URL without re-running the route (e.g. #/new → #/report/<id>). */
+  /** Rewrites the URL without re-running the route (e.g. #/new → #/report/<id>/edit). */
   replaceSilently(path) {
     history.replaceState(null, '', `#${path}`);
   },

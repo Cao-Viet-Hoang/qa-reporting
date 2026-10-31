@@ -74,7 +74,7 @@ export function bucketLabel(bucket, unit, { long = false } = {}) {
   return long ? `${weekdayShort(bucket.key)}, ${formatDate(bucket.key)}` : `${d}/${m}`;
 }
 
-export function createTrendChart({ buckets, unit, threshold }) {
+export function createTrendChart({ buckets, unit }) {
   let active = -1;
   let geo = null;
 
@@ -92,10 +92,10 @@ export function createTrendChart({ buckets, unit, threshold }) {
     const band = plotW / n;
     const xc = (i) => M.l + band * (i + 0.5);
 
-    // Rate panel: non-zero baseline is fine for a line; keep the threshold in view.
+    // Rate panel: non-zero baseline is fine for a line.
     const rates = buckets.map((b) => b.rate).filter((v) => v != null);
     const minRate = rates.length ? Math.min(...rates) : 1;
-    const lo = Math.max(0, Math.min(Math.floor((Math.min(minRate, threshold) - 0.05) * 10) / 10, 0.6));
+    const lo = Math.max(0, Math.min(Math.floor((minRate - 0.05) * 10) / 10, 0.6));
     const step = 1 - lo > 0.5 ? 0.2 : 0.1;
     const yr = (v) => M.t + (1 - (v - lo) / (1 - lo)) * rateH;
     const rateTicks = [];
@@ -128,10 +128,6 @@ export function createTrendChart({ buckets, unit, threshold }) {
         s('line', { class: 'chart__grid', x1: M.l, x2: W - M.r, y1: yr(v), y2: yr(v) }),
         s('text', { class: 'chart__tick', x: M.l - 8, y: yr(v) + 4, 'text-anchor': 'end', text: `${Math.round(v * 100)}%` }),
       ]),
-      threshold > lo && [
-        s('line', { class: 'chart__ref', x1: M.l, x2: W - M.r, y1: yr(threshold), y2: yr(threshold) }),
-        s('text', { class: 'chart__ref-label', x: W - M.r, y: yr(threshold) - 5, 'text-anchor': 'end', text: `Ngưỡng ${Math.round(threshold * 100)}%` }),
-      ],
       ncTicks.map((v) => [
         v > 0 && s('line', { class: 'chart__grid', x1: M.l, x2: W - M.r, y1: yn(v), y2: yn(v) }),
         s('text', { class: 'chart__tick', x: M.l - 8, y: yn(v) + 4, 'text-anchor': 'end', text: formatNumber(v) }),
@@ -144,7 +140,7 @@ export function createTrendChart({ buckets, unit, threshold }) {
         ? s('polyline', { class: 'chart__line', points: pts.map((p) => p.join(',')).join(' ') })
         : null)),
       buckets.map((b, i) => b.rate != null && (showDots || segments.some((sg) => sg.length === 1 && sg[0][0] === xc(i)))
-        && s('circle', { class: ['chart__dot', b.rate < threshold && 'is-low'], 'data-i': i, cx: xc(i), cy: yr(b.rate), r: 4 })),
+        && s('circle', { class: 'chart__dot', 'data-i': i, cx: xc(i), cy: yr(b.rate), r: 4 })),
       buckets.map((b, i) => i % labelStep === 0
         && s('text', { class: 'chart__tick chart__tick--x', x: xc(i), y: H - 6, 'text-anchor': 'middle', text: bucketLabel(b, unit) })),
       overlay,
@@ -174,7 +170,7 @@ export function createTrendChart({ buckets, unit, threshold }) {
     frame.showTip(x, geo.M.t, [
       h('div', { class: 'chart__tip-head' }, bucketLabel(b, unit, { long: true })),
       tipRow('chart__key--line', 'tỉ lệ chấp nhận', b.rate == null ? '—' : formatPercent(b.rate), b.inspections ? `${b.passes}/${b.inspections} lần` : 'không có lần kiểm'),
-      tipRow('chart__key--nc', 'sự KPH', formatNumber(b.ncCount), b.ncCount ? `SL ${formatNumber(b.ncQuantity)}` : null),
+      tipRow('chart__key--nc', 'sự KPH', formatNumber(b.ncCount)),
     ]);
   }
 

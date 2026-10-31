@@ -23,6 +23,7 @@ Web nhập báo cáo kiểm soát chất lượng theo mẫu `20261018- QAVLF-BM
 |---|---|---|
 | 1 | Nhập mật khẩu | 1 ô mật khẩu |
 | 2 | Danh sách báo cáo | Sắp xếp theo ngày mới nhất, lọc theo khoảng ngày, tạo mới. Bấm vào để xem, sửa, xoá |
+| 2b | Xem báo cáo | Chỉ đọc, hiện đầy đủ mọi mục. Có nút **Sửa báo cáo** để chuyển sang form |
 | 3 | Form báo cáo | Nhập Phần 1 (ý 1–7) và Phần 2 |
 | 4 | Thống kê | Tỉ lệ chấp nhận NCC, nguyên nhân KPH, theo khoảng ngày |
 | 5 | Danh mục | Nhà cung cấp, Nguyên nhân KPH |
@@ -87,6 +88,7 @@ Mỗi ý là một khối có thể thu gọn hoặc mở ra.
 - Mỗi dòng gồm:
   - **Sự KPH:** tự nhập.
   - **Nguyên nhân:** chọn từ danh mục, có search nhanh.
+  - **Hình thức xử lý:** Hủy / Tái chế / Trả hàng / Khác (chọn Khác thì ghi rõ).
   - **Số lượng.**
 - Nếu giá trị đang gõ chưa có trong danh mục thì hiện tuỳ chọn **"+ Thêm '…' vào danh mục"** để thêm ngay trong form.
 - Có nút thêm và xoá dòng.
@@ -105,8 +107,8 @@ Mỗi ý là một khối có thể thu gọn hoặc mở ra.
   - Tỉ lệ = số lần Đạt / tổng số lần kiểm.
   - Bảng gồm NCC, Số lần kiểm, Số lần Đạt, %. Sắp xếp % từ thấp đến cao.
 - **Nguyên nhân KPH:**
-  - Số lần xuất hiện và tổng số lượng của từng nguyên nhân.
-  - Biểu đồ Pareto (theo số lần hoặc số lượng), tô đậm nhóm nguyên nhân chiếm 80% tổng.
+  - Số lần xuất hiện của từng nguyên nhân. Không cộng số lượng, vì số lượng ghi kèm đơn vị khác nhau (kg, gói, thùng…).
+  - Biểu đồ Pareto theo số lần, tô đậm nhóm nguyên nhân chiếm 80% tổng.
 
 ## 5. Danh mục (sửa trên web)
 
@@ -148,7 +150,8 @@ reports/{reportId}
   samples[]       : { product, lot, quantity }                                 // ý 5
   lineAreas[]     : { area, items[]: { name, result, note } }                  // ý 6
   outbound[]      : { product, result, failQty, note }                         // ý 7
-  nonconformities[]: { description, causeId, causeName, quantity } // Phần 2
+  nonconformities[]: { description, causeId, causeName, disposition, dispositionNote, quantity } // Phần 2
+                    // disposition: "destroy" | "recycle" | "return" | "other" | null
   createdAt, updatedAt
 
 images/{imageId}            : { chunkCount, createdAt }

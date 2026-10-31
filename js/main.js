@@ -12,11 +12,12 @@ import { toast } from './ui/toast.js';
 import { renderLogin } from './screens/login-screen.js';
 import { mountReports } from './screens/reports-screen.js';
 import { mountReportForm } from './screens/report-form/report-form-screen.js';
+import { mountReportView } from './screens/report-view-screen.js';
 import { mountStats } from './screens/stats-screen.js';
 import { mountCatalog } from './screens/catalog-screen.js';
 
 const appEl = document.getElementById('app');
-const SCREENS = { reports: mountReports, new: mountReportForm, report: mountReportForm, stats: mountStats, catalog: mountCatalog };
+const SCREENS = { reports: mountReports, new: mountReportForm, report: mountReportView, edit: mountReportForm, stats: mountStats, catalog: mountCatalog };
 
 let shell = null;
 let currentScreen = null;
@@ -76,7 +77,7 @@ async function handleRoute(route) {
   if (token !== routeToken) return;
   currentScreen = null;
   shell.setRoute(route.name);
-  shell.setFocusMode(route.name === 'report' || route.name === 'new');
+  shell.setFocusMode(route.name === 'edit' || route.name === 'new');
   clear(shell.main);
   window.scrollTo(0, 0);
   const mount = SCREENS[route.name] || mountReports;
